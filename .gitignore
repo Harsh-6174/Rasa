@@ -1,0 +1,8 @@
+__pycache__
+.env
+sent_tr_venv/
+venv/
+test.py
+todo
+intent_test.yml
+tests

@@ -1,0 +1,180 @@
+version: "2.0"
+
+intents:
+  - create_incident
+  - update_incident
+  - update_incident_status
+  - fetch_incident_id
+  - fetch_incident_email
+  - fetch_incidents
+  - fetch_incident
+  - ask_hr_queries
+  - user_satisfaction_response
+  - ask_workelevate_queries
+  - fallback
+  - greet
+  - report_issue
+
+entities:
+  - ticket_type
+  - ticket_id
+  - user_email
+  - num_tickets
+  - short_description
+  - ticket_description
+  - category
+
+slots:
+  ticket_type:
+    type: text
+  ticket_type_update:
+    type: text
+  ticket_type_fetch:
+    type: text
+  ticket_id:
+    type: text
+  ticket_id_update:
+    type: text
+  ticket_id_or_email:
+    type: text
+  user_email:
+    type: text
+  short_description:
+    type: text
+  num_tickets:
+    type: text
+  ticket_description:
+    type: text
+  new_description:
+    type: text
+  new_status:
+    type: text
+  category:
+    type: text
+  user_query:
+    type: text
+  awaiting_satisfaction_feedback:
+    type: text
+  hr_query_completed:
+    type: bool
+  we_query_completed:
+    type: bool
+  troubleshooter_query_completed:
+    type: bool
+
+responses:
+  utter_greet_user:
+    - text: "Hi, how can i help you today?"
+
+  utter_ask_ticket_type:
+    - text: "Please specify the type of ticket you want to create. Incident or Service?"
+
+  utter_ask_ticket_type_update:
+    - text: "Please specify the type of ticket you want to update. Incident or Service?"
+
+  utter_ask_ticket_type_fetch:
+    - text: "Please specify the type of ticket you want to fetch. Incident or Service?"
+
+  utter_ask_ticket_id:
+    - text: "Please provide the ticket ID you would like to fetch."
+
+  utter_ask_ticket_id_update:
+    - text: "Please provide the ticket ID you would like to update."
+
+  utter_ask_user_email:
+    - text: "Please provide your email Id."
+
+  utter_ask_ticket_id_or_email:
+    - text: "Please provide your Ticket Id/Email Id"
+
+  utter_ask_short_description:
+    - text: "Please provide a short description of the issue?"
+
+  utter_ask_new_description:
+    - text: "Please provide the new description for the ticket."
+  
+  utter_ask_new_status:
+    - text: "Please provide the new status for the ticket."
+
+  utter_ask_ticket_description:
+    - text: "Please provide a detailed description of the issue."
+  
+  utter_ticket_updated:
+    - text: "Ticket updated successfully."
+  
+  utter_ask_num_tickets:
+    - text: "Please provide the number of tickets to fetch"
+
+  utter_ticket_fetched:
+    - text: "Ticket fetched"
+
+  utter_ask_category:
+    - text: "Please specify the category of the issue. Database | Hardware | Inquiry/Help | Network | Software."
+
+forms:
+  create_ticket_form:
+    # ticket_type:
+    #   - type: from_text
+    user_email:
+      - type: from_text
+    short_description:
+      - type: from_text
+    ticket_description:
+      - type: from_text
+    category:
+      - type: from_text
+
+  fetch_ticket_form:
+    required_slots:
+      # ticket_type_fetch:
+      #   - type: from_text
+      ticket_id_or_email:
+        - type: from_text
+
+  update_ticket_form:
+    required_slots:
+      # ticket_type_update:
+      #   - type: from_text
+      ticket_id_update:
+        - type: from_text
+      new_description:
+        - type: from_text
+  
+  update_ticket_status_form:
+    required_slots:
+      # ticket_type_update:
+      #   - type: from_text
+      ticket_id_update:
+        - type: from_text
+      new_status:
+        - type: from_text
+
+  fetch_last_tickets:
+    required_slots:
+      user_email:
+        - type: from_text
+        - type: from_entity
+          entity: user_email
+      # ticket_type_fetch:
+      #   - type: from_text
+      #   - type: from_entity
+      #     entity: ticket_type
+      num_tickets:
+        - type: from_text
+        - type: from_entity
+          entity: num_tickets
+
+actions:
+  - action_create_ticket
+  - action_fetch_ticket
+  - action_update_ticket_description
+  - action_update_ticket_status
+  - action_fetch_last_tickets
+  - action_get_hr_response
+  - action_get_workelevate_response
+  - action_handle_user_satisfaction
+  - action_default_fallback
+  - action_route_query
+  - action_find_troubleshooter
+  - action_get_troubleshooter_sop
+  - action_handle_user_satisfaction_troubleshooter

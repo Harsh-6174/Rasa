@@ -1,0 +1,343 @@
+version: "2.0"
+
+rules:
+  - rule: Start ticket creation form
+    steps:
+      - intent: create_incident
+      - action: create_ticket_form
+      - active_loop: create_ticket_form
+
+  - rule: Submit ticket creation form
+    steps:
+      - action: create_ticket_form
+      - active_loop: null
+      - action: action_create_ticket
+
+  - rule: Start fetch ticket form
+    steps:
+      - intent: fetch_incident
+      - action: fetch_ticket_form
+      - active_loop: fetch_ticket_form
+
+  - rule: Submit fetch ticket form
+    steps:
+      - action: fetch_ticket_form
+      - active_loop: null
+      - action: action_fetch_ticket
+
+  - rule: Start update ticket description form
+    steps:
+      - intent: update_incident
+      - action: update_ticket_form
+      - active_loop: update_ticket_form
+
+  - rule: Submit update ticket description form
+    steps:
+      - action: update_ticket_form
+      - active_loop: null
+      - action: action_update_ticket_description
+
+  - rule: Start update ticket status form
+    steps:
+      - intent: update_incident_status
+      - action: update_ticket_status_form
+      - active_loop: update_ticket_status_form
+
+  - rule: Submit update ticket status form
+    steps:
+      - action: update_ticket_status_form
+      - active_loop: null
+      - action: action_update_ticket_status
+
+  - rule: Start fetch last tickets form
+    steps:
+      - intent: fetch_incidents
+      - action: fetch_last_tickets
+      - active_loop: fetch_last_tickets
+
+  - rule: Submit fetch last tickets form
+    steps:
+      - action: fetch_last_tickets
+      - active_loop: null
+      - action: action_fetch_last_tickets
+
+  - rule: Solve HR related queries
+    steps:
+      - intent: ask_hr_queries
+      - action: action_get_hr_response
+
+  - rule: Handle user satisfaction after HR query
+    condition:
+      - slot_was_set:
+          - hr_query_completed: true
+    steps:
+      - intent: user_satisfaction_response
+      - action: action_handle_user_satisfaction
+
+  - rule: Solve Workelevate related queries
+    steps:
+      - intent: ask_workelevate_queries
+      - action: action_get_workelevate_response
+
+  - rule: Handle user satisfaction after WE query
+    condition:
+      - slot_was_set:
+        - we_query_completed: true
+    steps:
+      - intent: user_satisfaction_response
+      - action: action_handle_user_satisfaction
+
+  - rule: Handle unknown queries
+    steps:
+      - intent: fallback
+      - action: action_default_fallback
+
+  - rule: Find Troubleshooter
+    steps:
+      - intent: report_issue
+      - action: action_find_troubleshooter
+  
+  - rule: Handle user satisfaction after troubleshooter query
+    condition:
+      - slot_was_set:
+        - awaiting_satisfaction_feedback
+    steps:
+      - intent: user_satisfaction_response
+      - action: action_handle_user_satisfaction_troubleshooter
+
+  - rule: Greet user
+    steps:
+      - intent: greet
+      - action: utter_greet_user
+
+
+
+# rules:
+#   - rule: Start ticket creation form
+#     steps:
+#       - intent: create_incident
+#       - action: create_ticket_form
+#       - active_loop: create_ticket_form
+
+#   - rule: Submit ticket creation form
+#     condition:
+#       - active_loop: create_ticket_form
+#     steps:
+#       - action: create_ticket_form
+#       - active_loop: null
+#       - action: action_create_ticket
+
+#   - rule: Start fetch ticket form
+#     steps:
+#       - intent: fetch_incident
+#       - action: fetch_ticket_form
+#       - active_loop: fetch_ticket_form
+
+#   - rule: Submit fetch ticket form
+#     condition:
+#       - active_loop: fetch_ticket_form
+#     steps:
+#       - action: fetch_ticket_form
+#       - active_loop: null
+#       - action: action_fetch_ticket
+
+#   - rule: Start update ticket description form
+#     steps:
+#       - intent: update_incident
+#       - action: update_ticket_form
+#       - active_loop: update_ticket_form
+
+#   - rule: Submit update ticket description form
+#     condition:
+#       - active_loop: update_ticket_form
+#     steps:
+#       - action: update_ticket_form
+#       - active_loop: null
+#       - action: action_update_ticket_description
+
+#   - rule: Start update ticket status form
+#     steps:
+#       - intent: update_incident_status
+#       - action: update_ticket_status_form
+#       - active_loop: update_ticket_status_form
+
+#   - rule: Submit update ticket status form
+#     condition:
+#       - active_loop: update_ticket_status_form
+#     steps:
+#       - action: update_ticket_status_form
+#       - active_loop: null
+#       - action: action_update_ticket_status
+
+#   - rule: Start fetch last tickets
+#     steps:
+#       - intent: fetch_incidents
+#       - action: fetch_last_tickets
+#       - active_loop: fetch_last_tickets
+
+#   - rule: Submit fetch last tickets
+#     condition:
+#       - active_loop: fetch_last_tickets
+#     steps:
+#       - action: fetch_last_tickets
+#       - active_loop: null
+#       - action: action_fetch_last_tickets
+
+#   # - rule: Find troubleshooter
+#   #   steps:
+#   #     - intent: report_issue
+#   #     - action: action_find_troubleshooter
+#   - rule: Route user query
+#     steps:
+#       - intent: report_issue
+#       - action: action_route_query
+
+#   - rule: Solve HR related queries
+#     steps:
+#       - intent: ask_hr_queries
+#       - action: action_get_hr_response
+
+#   - rule: Handle user satisfaction after HR query
+#     condition:
+#       - slot_was_set:
+#           - hr_query_completed: true
+#           - awaiting_satisfaction_feedback: true
+#     steps:
+#       - intent: user_satisfaction_response
+#       - action: action_handle_user_satisfaction
+
+#   - rule: Solve Workelevate related queries
+#     steps:
+#       - intent: ask_workelevate_queries
+#       - action: action_get_workelevate_response
+
+#   - rule: Handle user satisfaction after WE query
+#     condition:
+#       - slot_was_set:
+#           - we_query_completed: true
+#           - awaiting_satisfaction_feedback: true
+#     steps:
+#       - intent: user_satisfaction_response
+#       - action: action_handle_user_satisfaction
+
+#   - rule: Greet user
+#     steps:
+#       - intent: greet
+#       - action: utter_greet_user
+
+
+
+
+
+
+
+
+
+
+# rules:
+#   - rule: Start ticket creation form
+#     steps:
+#       - intent: create_incident
+#       - action: create_ticket_form
+#       - active_loop: create_ticket_form
+
+#   - rule: Submit ticket creation form
+#     condition:
+#       - active_loop: create_ticket_form
+#     steps:
+#       - action: create_ticket_form
+#       - active_loop: null
+#       - action: action_create_ticket
+
+#   - rule: Start fetch ticket form
+#     steps:
+#       - intent: fetch_incident
+#       - action: fetch_ticket_form
+#       - active_loop: fetch_ticket_form
+
+#   - rule: Submit fetch ticket form
+#     condition:
+#       - active_loop: fetch_ticket_form
+#     steps:
+#       - action: fetch_ticket_form
+#       - active_loop: null
+#       - action: action_fetch_ticket
+
+#   - rule: Start update ticket description form
+#     steps:
+#       - intent: update_incident
+#       - action: update_ticket_form
+#       - active_loop: update_ticket_form
+
+#   - rule: Submit update ticket description form
+#     condition:
+#       - active_loop: update_ticket_form
+#     steps:
+#       - action: update_ticket_form
+#       - active_loop: null
+#       - action: action_update_ticket_description
+
+#   - rule: Start update ticket status form
+#     steps:
+#       - intent: update_incident_status
+#       - action: update_ticket_status_form
+#       - active_loop: update_ticket_status_form
+
+#   - rule: Submit update ticket status form
+#     condition:
+#       - active_loop: update_ticket_status_form
+#     steps:
+#       - action: update_ticket_status_form
+#       - active_loop: null
+#       - action: action_update_ticket_status
+
+#   - rule: Start fetch last tickets
+#     steps:
+#       - intent: fetch_incidents
+#       - action: fetch_last_tickets
+#       - active_loop: fetch_last_tickets
+
+#   - rule: Submit fetch last tickets
+#     condition:
+#       - active_loop: fetch_last_tickets
+#     steps:
+#       - action: fetch_last_tickets
+#       - active_loop: null
+#       - action: action_fetch_last_tickets
+
+#   - rule: Route user query
+#     steps:
+#       - intent: user_query
+#       - action: action_route_query
+
+#   - rule: Handle user satisfaction after HR query
+#     condition:
+#       - slot_was_set:
+#           - hr_query_completed: true
+#           - awaiting_satisfaction_feedback: true
+#     steps:
+#       - intent: user_satisfaction_response
+#       - action: action_handle_user_satisfaction
+  
+#   # - rule: Handle user satisfaction after troubleshooter
+#   #   condition:
+#   #     - slot_was_set:
+#   #         - hr_query_completed: true
+#   #         - awaiting_satisfaction_feedback: true
+#   #   steps:
+#   #     - intent: user_satisfaction_response
+#   #     - action: action_handle_user_satisfaction
+
+#   - rule: Handle user satisfaction after Workelevate query
+#     condition:
+#       - slot_was_set:
+#           - we_query_completed: true
+#           - awaiting_satisfaction_feedback: true
+#     steps:
+#       - intent: user_satisfaction_response
+#       - action: action_handle_user_satisfaction
+
+#   - rule: Greet user
+#     steps:
+#       - intent: greet
+#       - action: utter_greet_user

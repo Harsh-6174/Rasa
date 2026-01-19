@@ -1,0 +1,434 @@
+version: "2.0"
+
+nlu:
+  - intent: create_incident
+    examples: |
+      - create a support ticket
+      - Raise a ticket
+      - Raise a incident
+      - need help with something
+      - facing difficulties
+      - create a support request
+      - open a new support ticket
+      - open a new support incident
+      - raise an issue
+      - Problem
+      - Create new ticket
+      - Create new incident
+      - Issue
+      - Need help
+      - create a new request
+      - submit a support ticket
+
+  - intent: update_incident
+    examples: |
+      - update my ticket
+      - update my incident
+      - change my ticket details
+      - change my incident details
+      - update my ticket description
+      - update my incident description
+      - modify details of my ticket
+      - update the details on my ticket
+
+  - intent: update_incident_status
+    examples: |
+      - update my ticket status
+      - update the status of my incident
+      - change the status of my ticket
+      - change the status of my incident
+      - change my ticket status
+      - change my incident status
+      - update status of my support ticket
+      - update status of my support incident
+
+  - intent: fetch_incident
+    examples: |
+      - fetch my ticket
+      - show my ticket
+      - show my incident
+      - I need my ticket details
+      - I need my incident details
+      - What is the status of my ticket?
+      - Show ticket
+      - Retrieve my ticket
+      - check status of my incident
+      - check status of my ticket
+      - Show me information for my ticket
+      - show the details of my ticket
+      - Fetch my ticket by ID
+
+  - intent: fetch_incidents
+    examples: |
+      - Show me last [5](num_tickets) tickets
+      - Show me last [10](num_tickets) tickets
+      - Show me last [3](num_tickets) tickets
+      - Fetch my last [7](num_tickets) tickets
+      - show my last [6](num_tickets) tickets
+      - Show my most recent [9](num_tickets) tickets
+      - Give me last [4](num_tickets) tickets
+      - I need the last [8](num_tickets) tickets
+      - Show me last [5](num_tickets) [incident](ticket_type) tickets
+      - Show me the last [10](num_tickets) [incident](ticket_type) tickets
+      - Fetch my last [3](num_tickets) [incident](ticket_type) tickets
+      - Show tickets for email [admin@example.com](user_email)
+      - Pull up my last [6](num_tickets) [incident](ticket_type) tickets
+  
+  - intent: ask_hr_queries
+    examples: |
+      - What are the HR policies?
+      - tell me about HR policies?
+      - Tell me the employee benefits.
+      - What is the leave policy?
+      - How does the sick leave work?
+      - What are the HR rules?
+      - What is the policy for vacation days?
+      - Are there any specific HR policies?
+      - What is the dress code policy?
+      - What are the company holidays?
+      - How do I apply for leave?
+      - What is the process for sick leave?
+      - How do I get medical benefits?
+      - What are the holidays in the company?
+      - How can I request vacation days?
+      - How is employee attendance tracked?
+      - What is the working hours policy?
+      - Do we have maternity leave?
+      - Is there a bonus policy in the company?
+      - How do I update my personal details in the HR system?
+      - What is the performance evaluation process?
+      - What are the guidelines for business attire?
+
+  - intent: ask_workelevate_queries
+    examples: |
+      - What is WorkElevate?
+      - Tell me about WorkElevate.
+      - How does WorkElevate work?
+      - What is the purpose of WorkElevate?
+      - How can WorkElevate help my business?
+      - What services does WorkElevate provide?
+      - What are the key features of WorkElevate?
+      - Is WorkElevate a tool for businesses or individuals?
+      - Does WorkElevate integrate with other tools?
+      - Does WorkElevate offer analytics and reporting features?
+
+  - intent: report_issue
+    examples: |
+      - outlook isn’t opening
+      - cannot see my emails
+      - wifi is slow
+      - printer is not working
+      - having trouble with Microsoft Teams
+      - chrome is running slow
+      - outlook keeps crashing
+      - internet speed is poor
+      - unable to connect to internet
+      - browser not loading pages
+      - facing problem in sending mail
+      - web pages take long to load
+      - Gmail won’t sync
+      - outlook keeps asking for password
+      - Teams call is dropping frequently
+      - need help with OneDrive sync issue
+      - unable to connect to VPN
+
+  - intent: greet
+    examples: |
+      - hi
+      - hello
+      - hey
+      - hey there
+      - hello there
+      - good morning
+      - good evening
+
+  - intent: user_satisfaction_response
+    examples: |
+      - yes
+      - yeah
+      - yup
+      - yes please
+      - no
+      - nope
+      - not really
+      - no thanks
+
+  - intent: fallback
+    examples: |
+      - How do I fix a flat tyre?
+      - Can you help me with my car problem?
+      - What's the weather like today?
+      - Can you recommend a good movie to watch?
+      - How do I cook pasta?
+      - What’s the capital of France?
+      - Do you know any good restaurants around here?
+      - How do I set up my new phone?
+      - How can I install software on my computer?
+      - What's the best way to grow tomatoes?
+      - How to tie a tie?
+      - Can you suggest a gift for my mom?
+      - Where can I find a good gym?
+      - What time does the movie start?
+      - I need help choosing a new laptop.
+      - Can you suggest some fun activities for the weekend?
+      - Tell me the meaning of life.
+      - How do I solve a Rubik’s Cube?
+      - What’s the best phone in 2023?
+      - How do I change my car’s oil?
+      - What’s the best recipe for a chocolate cake?
+      - Can you help me plan my vacation?
+      - How do I get a passport?
+      - Do you know any fun games to play with kids?
+      - How can I become a better cook?
+      - Where can I buy a good camera?
+      - What's the best way to stay healthy?
+      - How do I fix my printer?
+      - Where can I buy some new shoes?
+      - How do I play chess?
+      - What's the best way to meditate?
+      - Can you help me plan a road trip?
+      - How do I get to the nearest train station?
+      - Can you teach me how to draw?
+      - How to fix a leaky faucet?
+      - What’s the best way to organize my closet?
+      - How can I stop procrastinating?
+      - Can you help me write a poem?
+      - Tell me about the history of the Eiffel Tower.
+      - Can you explain quantum physics to me?
+      - How do I use Instagram?
+      - Where can I find good hiking trails?
+      - Can you tell me a joke?
+      - I’m looking for a place to get a haircut.
+      - What’s the meaning of the word “ephemeral”?
+      - How can I improve my photography skills?
+      - Can you help me learn Spanish?
+      - Tell me a fun fact about space.
+      - What is the process to get a driving license?
+      - How do I play the guitar?
+      - I need advice on starting a YouTube channel.
+      - What are the best practices for social media marketing?
+      - How to change a flat tire on a bike?
+      - Can you give me some travel tips for Europe?
+      - How can I stay motivated while working from home?
+      - How do I write a CV?
+      - What’s the best way to prepare for an interview?
+      - How do I build a website?
+      - Can you help me with my relationship problems?
+      - What’s the best way to study for exams?
+      - How do I fix a broken phone screen?
+      - I need help picking out a wedding dress.
+      - Can you teach me how to play poker?
+      - What’s the weather forecast for tomorrow?
+      - Can you tell me the stock market news?
+      - How do I create a budget plan?
+      - What’s the latest on global warming?
+      - Can you teach me some yoga poses?
+      - What’s the best way to learn programming?
+      - Can you help me find a good tutor?
+      - Tell me how to plant a tree.
+      - I need advice on buying a new house.
+      - How to teach my dog tricks?
+      - How can I make my resume stand out?
+      - What is your favorite movie?
+      - Can you recommend a book to read?
+      - How do I start a podcast?
+      - Where should I go for a vacation in Asia?
+      - How do I write a research paper?
+      - I need help picking a college major.
+      - Can you explain the concept of blockchain?
+      - What’s the best way to train for a marathon?
+      - How can I improve my public speaking skills?
+      - Can you tell me about the pyramids in Egypt?
+      - How to get started with investing?
+      - What is the meaning of life?
+      - Can you help me with my homework?
+      - How can I stay productive while working from home?
+
+
+
+
+
+
+
+
+
+
+
+
+
+# nlu:
+#   - intent: create_incident
+#     examples: |
+#       - create a ticket
+#       - raise an incident
+#       - open a ticket
+#       - log an issue
+#       - create incident for me
+#       - to raise a ticket
+#       - please create a ticket
+
+#   - intent: fetch_incident
+#     examples: |
+#       - fetch my ticket
+#       - i want to see my ticket
+#       - get ticket details
+#       - check my ticket
+#       - show ticket status
+#       - view my incident
+#       - get incident details
+
+#   - intent: update_incident
+#     examples: |
+#       - update my ticket
+#       - change incident description
+#       - modify my ticket
+#       - update incident details
+
+#   - intent: update_incident_status
+#     examples: |
+#       - close my ticket
+#       - resolve my incident
+#       - mark ticket as closed
+#       - change ticket status
+
+#   - intent: fetch_incidents
+#     examples: |
+#       - show my last tickets
+#       - list recent incidents
+#       - show recent tickets
+#       - fetch my incidents
+
+#   - intent: report_issue
+#     examples: |
+#       - my system is slow
+#       - teams is not working
+#       - outlook is not opening
+#       - browser is slow
+#       - vpn is disconnected
+#       - laptop is hanging
+#       - email is not syncing
+#       - internet is not working
+#       - screen is frozen
+#       - unable to login
+
+#   - intent: ask_hr_queries
+#     examples: |
+#       - leave policy
+#       - holiday list
+#       - HR contact
+#       - payroll issue
+#       - salary related question
+
+#   - intent: ask_workelevate_queries
+#     examples: |
+#       - workelevate login
+#       - workelevate access issue
+#       - WE portal problem
+#       - workelevate not opening
+
+#   - intent: user_satisfaction_response
+#     examples: |
+#       - yes
+#       - yeah
+#       - yep
+#       - y
+#       - sure
+#       - correct
+#       - absolutely
+#       - that helped
+#       - this helped
+#       - it helped
+#       - satisfied
+#       - happy with this
+#       - no
+#       - nope
+#       - nah
+#       - n
+#       - not really
+#       - didn't help
+#       - not helpful
+#       - I still need help
+#       - I am not satisfied
+
+#   - intent: greet
+#     examples: |
+#       - hi
+#       - hello
+#       - hey
+#       - good morning
+
+#   - intent: fallback
+#     examples: |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# nlu:
+#   - intent: create_incident
+#     examples: |
+#       - raise ticket
+#       - create ticket
+#       - open ticket
+#       - log incident
+
+#   - intent: fetch_incident
+#     examples: |
+#       - fetch ticket
+#       - show ticket
+#       - check ticket
+#       - view ticket
+
+#   - intent: update_incident
+#     examples: |
+#       - update ticket
+#       - change incident description
+#       - modify ticket
+#       - update incident details
+
+#   - intent: update_incident_status
+#     examples: |
+#       - close ticket
+#       - resolve incident
+#       - mark ticket as closed
+#       - change ticket status
+  
+#   - intent: user_satisfaction_response
+#     examples: |
+#       - yes
+#       - yeah
+#       - yup
+#       - correct
+#       - works
+#       - fine
+#       - ok
+#       - okay
+#       - no
+#       - nope
+#       - not really
+#       - not helpful
+
+#   - intent: user_query
+#     examples: |
+#       - leave policy
+#       - holiday list
+#       - teams is not working
+#       - my system is slow
+#       - outlook error
+#       - vpn is not connecting
+#       - workelevate is not updating
+#       - timesheet issue
+#       - email not working
+#       - laptop is hanging
