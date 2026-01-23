@@ -132,6 +132,76 @@ nlu:
       - need help with OneDrive sync issue
       - unable to connect to VPN
 
+  - intent: request_software
+    examples: |
+      - install [google chrome](software_name)
+      - install [microsoft teams](software_name)
+      - want to install [visual studio code](software_name)
+      - please install [pycharm](software_name)
+      - install [postman](software_name)
+      - install [vmware](software_name)
+      - install [docker desktop](software_name)
+      - need [github desktop](software_name)
+      - install [zoom](software_name)
+      - want to install [notepad++](software_name)
+      - want to install software in my system
+      - install software for me
+      - need new software
+      - install application
+
+  - intent: exit_chat
+    examples: |
+      - bye
+      - goodbye
+      - exit
+      - quit
+      - stop
+      - end
+      - end chat
+      - close chat
+      - that's all
+      - no thanks
+      - nothing else
+      - done
+      - finished
+      - I don't need anything else
+      - you can close this now
+      - we are done here
+      - I'm done
+      - I'm finished
+      - please end the chat
+      - I want to exit
+      - I want to quit
+      - stop the chat
+      - end this conversation
+      - close this conversation
+      - that's all for now
+      - I'm good, thanks
+      - no, that's all
+      - nothing more, thanks
+
+  # - intent: greet
+  #   examples: |
+  #     - hi
+  #     - hello
+  #     - hey
+  #     - hey there
+  #     - hello there
+  #     - good morning
+  #     - good evening
+
+  # - intent: user_satisfaction_response
+  #   examples: |
+  #     - yes
+  #     - yeah
+  #     - yup
+  #     - yes please
+  #     - no
+  #     - nope
+  #     - not really
+  #     - no thanks
+
+
   - intent: greet
     examples: |
       - hi
@@ -141,17 +211,46 @@ nlu:
       - hello there
       - good morning
       - good evening
-
+      - good afternoon
+      - hi there
+      - hello bot
+      - hey bot
+      - hi bot
+      - hello assistant
+      - hey assistant
+  
   - intent: user_satisfaction_response
     examples: |
       - yes
       - yeah
       - yup
       - yes please
+      - sure
+      - absolutely
+      - that helped
+      - it helped
+      - this helped
+      - it worked
+      - that worked
+      - looks good
+      - all good
+      - satisfied
+      - I'm satisfied
+      - resolved
+      - problem solved
       - no
       - nope
       - not really
       - no thanks
+      - it didn't help
+      - that didn't help
+      - this didn't work
+      - it didn't work
+      - not helpful
+      - still not working
+      - not resolved
+      - I'm not satisfied
+      - this didn't solve my problem
 
   - intent: fallback
     examples: |
@@ -242,193 +341,4 @@ nlu:
       - How to get started with investing?
       - What is the meaning of life?
       - Can you help me with my homework?
-      - How can I stay productive while working from home?
-
-
-
-
-
-
-
-
-
-
-
-
-
-# nlu:
-#   - intent: create_incident
-#     examples: |
-#       - create a ticket
-#       - raise an incident
-#       - open a ticket
-#       - log an issue
-#       - create incident for me
-#       - to raise a ticket
-#       - please create a ticket
-
-#   - intent: fetch_incident
-#     examples: |
-#       - fetch my ticket
-#       - i want to see my ticket
-#       - get ticket details
-#       - check my ticket
-#       - show ticket status
-#       - view my incident
-#       - get incident details
-
-#   - intent: update_incident
-#     examples: |
-#       - update my ticket
-#       - change incident description
-#       - modify my ticket
-#       - update incident details
-
-#   - intent: update_incident_status
-#     examples: |
-#       - close my ticket
-#       - resolve my incident
-#       - mark ticket as closed
-#       - change ticket status
-
-#   - intent: fetch_incidents
-#     examples: |
-#       - show my last tickets
-#       - list recent incidents
-#       - show recent tickets
-#       - fetch my incidents
-
-#   - intent: report_issue
-#     examples: |
-#       - my system is slow
-#       - teams is not working
-#       - outlook is not opening
-#       - browser is slow
-#       - vpn is disconnected
-#       - laptop is hanging
-#       - email is not syncing
-#       - internet is not working
-#       - screen is frozen
-#       - unable to login
-
-#   - intent: ask_hr_queries
-#     examples: |
-#       - leave policy
-#       - holiday list
-#       - HR contact
-#       - payroll issue
-#       - salary related question
-
-#   - intent: ask_workelevate_queries
-#     examples: |
-#       - workelevate login
-#       - workelevate access issue
-#       - WE portal problem
-#       - workelevate not opening
-
-#   - intent: user_satisfaction_response
-#     examples: |
-#       - yes
-#       - yeah
-#       - yep
-#       - y
-#       - sure
-#       - correct
-#       - absolutely
-#       - that helped
-#       - this helped
-#       - it helped
-#       - satisfied
-#       - happy with this
-#       - no
-#       - nope
-#       - nah
-#       - n
-#       - not really
-#       - didn't help
-#       - not helpful
-#       - I still need help
-#       - I am not satisfied
-
-#   - intent: greet
-#     examples: |
-#       - hi
-#       - hello
-#       - hey
-#       - good morning
-
-#   - intent: fallback
-#     examples: |
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# nlu:
-#   - intent: create_incident
-#     examples: |
-#       - raise ticket
-#       - create ticket
-#       - open ticket
-#       - log incident
-
-#   - intent: fetch_incident
-#     examples: |
-#       - fetch ticket
-#       - show ticket
-#       - check ticket
-#       - view ticket
-
-#   - intent: update_incident
-#     examples: |
-#       - update ticket
-#       - change incident description
-#       - modify ticket
-#       - update incident details
-
-#   - intent: update_incident_status
-#     examples: |
-#       - close ticket
-#       - resolve incident
-#       - mark ticket as closed
-#       - change ticket status
-  
-#   - intent: user_satisfaction_response
-#     examples: |
-#       - yes
-#       - yeah
-#       - yup
-#       - correct
-#       - works
-#       - fine
-#       - ok
-#       - okay
-#       - no
-#       - nope
-#       - not really
-#       - not helpful
-
-#   - intent: user_query
-#     examples: |
-#       - leave policy
-#       - holiday list
-#       - teams is not working
-#       - my system is slow
-#       - outlook error
-#       - vpn is not connecting
-#       - workelevate is not updating
-#       - timesheet issue
-#       - email not working
-#       - laptop is hanging
+      - How can I stay productive while working from home?      

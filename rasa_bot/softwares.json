@@ -1,0 +1,230 @@
+{
+  "visual studio code": {
+    "source": "workelevate",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "pycharm": {
+    "source": "workelevate",
+    "license_type": "licensed",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "intellij idea": {
+    "source": "workelevate",
+    "license_type": "licensed",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "github desktop": {
+    "source": "workelevate",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "postman": {
+    "source": "workelevate",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "docker desktop": {
+    "source": "workelevate",
+    "license_type": "licensed",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "7-zip": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "vlc media player": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "adobe reader": {
+    "source": "external",
+    "license_type": "licensed",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+
+  "utorrent": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": true
+  },
+  "bittorrent": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": true
+  },
+  "teamviewer": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": true,
+    "is_blacklisted": false
+  },
+  "anydesk": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": true,
+    "is_blacklisted": false
+  },
+  "whatsapp desktop": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": true
+  },
+
+  "jira": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": true,
+    "is_blacklisted": false
+  },
+  "confluence": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": true,
+    "is_blacklisted": false
+  },
+  "winrar": {
+  "source": "sam",
+  "license_type": "licensed",
+  "is_restricted": true,
+  "is_blacklisted": true
+  },
+  "nero": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": true,
+    "is_blacklisted": true
+  },
+  "daemon tools": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": true,
+    "is_blacklisted": true
+  },
+  "skype": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": false,
+    "is_blacklisted": true
+  },
+  "winzip": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": false,
+    "is_blacklisted": true
+  },
+  "adobe photoshop": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": true,
+    "is_blacklisted": false
+  },
+  "adobe illustrator": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": true,
+    "is_blacklisted": false
+  },
+  "tableau": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": true,
+    "is_blacklisted": false
+  },
+  "power bi": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": true,
+    "is_blacklisted": false
+  },
+  "microsoft visio": {
+  "source": "sam",
+  "license_type": "licensed",
+  "is_restricted": false,
+  "is_blacklisted": false
+  },
+
+  "sql server management studio": {
+    "source": "workelevate",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "vmware workstation": {
+    "source": "sam",
+    "license_type": "licensed",
+    "is_restricted": true,
+    "is_blacklisted": false
+  },
+  "postgresql": {
+    "source": "workelevate",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+
+  "zoom": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "slack": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "notepad++": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "gimp": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+
+  "steam": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": true
+  },
+  "epic games launcher": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": true
+  },
+
+  "google chrome": {
+    "source": "workelevate",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
+  "firefox": {
+    "source": "external",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  }
+}

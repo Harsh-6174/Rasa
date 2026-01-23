@@ -11,6 +11,8 @@ intents:
   - ask_hr_queries
   - user_satisfaction_response
   - ask_workelevate_queries
+  - request_software
+  - inform
   - fallback
   - greet
   - report_issue
@@ -23,6 +25,7 @@ entities:
   - short_description
   - ticket_description
   - category
+  - software_name
 
 slots:
   ticket_type:
@@ -61,6 +64,10 @@ slots:
     type: bool
   troubleshooter_query_completed:
     type: bool
+  software_name:
+    type: text
+  requested_software_type:
+    type: text
 
 responses:
   utter_greet_user:
@@ -108,13 +115,28 @@ responses:
   utter_ticket_fetched:
     - text: "Ticket fetched"
 
+  utter_ask_software_name:
+    - text: "[UTTER] - Which software would you like me to install?"
+      buttons:
+        - title: "Google Chrome"
+          payload: '/inform{"software_name":"google chrome"}'
+        - title: "Microsoft Teams"
+          payload: '/inform{"software_name":"microsoft teams"}'
+        - title: "Zoom"
+          payload: '/inform{"software_name":"zoom"}'
+        - title: "Slack"
+          payload: '/inform{"software_name":"slack"}'
+        - title: "Adobe Reader"
+          payload: '/inform{"software_name":"adobe reader"}'
+
+  utter_goodbye:
+    - text: "Thanks for chatting! Have a great day."
+
   utter_ask_category:
     - text: "Please specify the category of the issue. Database | Hardware | Inquiry/Help | Network | Software."
 
 forms:
   create_ticket_form:
-    # ticket_type:
-    #   - type: from_text
     user_email:
       - type: from_text
     short_description:
@@ -126,24 +148,18 @@ forms:
 
   fetch_ticket_form:
     required_slots:
-      # ticket_type_fetch:
-      #   - type: from_text
       ticket_id_or_email:
         - type: from_text
 
   update_ticket_form:
     required_slots:
-      # ticket_type_update:
-      #   - type: from_text
       ticket_id_update:
         - type: from_text
       new_description:
         - type: from_text
-  
+
   update_ticket_status_form:
     required_slots:
-      # ticket_type_update:
-      #   - type: from_text
       ticket_id_update:
         - type: from_text
       new_status:
@@ -155,14 +171,17 @@ forms:
         - type: from_text
         - type: from_entity
           entity: user_email
-      # ticket_type_fetch:
-      #   - type: from_text
-      #   - type: from_entity
-      #     entity: ticket_type
       num_tickets:
         - type: from_text
         - type: from_entity
           entity: num_tickets
+
+  software_request_form:
+    required_slots:
+      software_name:
+        - type: from_entity
+          entity: software_name
+        - type: from_text
 
 actions:
   - action_create_ticket
@@ -178,3 +197,5 @@ actions:
   - action_find_troubleshooter
   - action_get_troubleshooter_sop
   - action_handle_user_satisfaction_troubleshooter
+  - action_handle_software_request
+  - action_end_chat

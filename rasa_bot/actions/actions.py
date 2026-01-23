@@ -1,9 +1,10 @@
 import json, os
 from dotenv import load_dotenv
 from sklearn.feature_extraction.text import TfidfVectorizer
+from rapidfuzz import process
 from sklearn.metrics.pairwise import cosine_similarity
 from rasa_sdk import Action
-from rasa_sdk.events import SlotSet, FollowupAction
+from rasa_sdk.events import SlotSet, FollowupAction, ActiveLoop, AllSlotsReset
 import re, requests
 from requests.auth import HTTPBasicAuth
 
@@ -75,7 +76,8 @@ class ActionCreateTicket(Action):
             ticket_id = result.get("number", result.get("request_number"))
             dispatcher.utter_message(f"Your ticket has been created with ticket Id - {ticket_id}")
 
-        return [SlotSet("user_email", None), SlotSet("short_description", None), SlotSet("ticket_description", None), SlotSet("category", None)]
+        # return [SlotSet("user_email", None), SlotSet("short_description", None), SlotSet("ticket_description", None), SlotSet("category", None)]
+        return [SlotSet("short_description", None), SlotSet("ticket_description", None), SlotSet("category", None)]
 
 
 def fetch_ticket_by_id(ticket_id):  
@@ -427,7 +429,7 @@ class ActionGetHRResponse(Action):
         payload = {
             "inputs": {"domain_name": domain_name},
             "query": user_query,
-            "response_mode": "blocking", #streaming
+            "response_mode": "blocking",
             "conversation_id": "",
             "user": "abc-123",
             "files": [
@@ -450,34 +452,105 @@ class ActionGetHRResponse(Action):
             raw_answer = response_data.get("answer", "")
             clean_answer = re.search(r'</think>(.*)', raw_answer, re.DOTALL)
             dispatcher.utter_message(clean_answer.group(1).strip())
-            dispatcher.utter_message('Are you happy with the solution?')
+            dispatcher.utter_message('HR - Are you happy with the solution?')
         except Exception as e:
             dispatcher.utter_message("There was an error with the HR API request")
             print(f"Error: {e}")
         
-        # return [SlotSet("hr_query_completed", True)]
         return [
             SlotSet("hr_query_completed", True),
-            SlotSet("awaiting_satisfaction_feedback", True)
+            SlotSet("awaiting_satisfaction_feedback", "hr"),
+            SlotSet("user_query", user_query)
         ]
+
+
+# class ActionHandleUserSatisfaction(Action):
+#     def name(self):
+#         return "action_handle_user_satisfaction"
+    
+#     def run(self, dispatcher, tracker, domain):
+
+#         user_satisfaction = tracker.latest_message.get("text", "").lower().strip()
+
+#         if user_satisfaction == "yes":
+#             dispatcher.utter_message(
+#                 "Great! I'm glad I could help. Let me know if you need anything else."
+#             )
+#             return [
+#                 SlotSet("hr_query_completed", None),
+#                 SlotSet("we_query_completed", None),
+#                 SlotSet("awaiting_satisfaction_feedback", None),
+#                 ActiveLoop(None),
+#                 FollowupAction("action_listen")
+#             ]
+
+#         if user_satisfaction == "no":
+#             dispatcher.utter_message(
+#                 "Sorry to hear that! I'll raise a ticket for you right away."
+#             )
+#             return [
+#                 SlotSet("hr_query_completed", None),
+#                 SlotSet("we_query_completed", None),
+#                 SlotSet("awaiting_satisfaction_feedback", None),
+#                 ActiveLoop(None),
+#                 FollowupAction("create_ticket_form")
+#             ]
+
+#         dispatcher.utter_message(
+#             "I'm sorry, I didn't understand. Please type 'yes' if you're satisfied "
+#             "or 'no' if you'd like to raise a ticket."
+#         )
+#         return [
+#             FollowupAction("action_listen")
+#         ]
 
 class ActionHandleUserSatisfaction(Action):
     def name(self):
         return "action_handle_user_satisfaction"
-    
+
     def run(self, dispatcher, tracker, domain):
-        user_satisfaction = tracker.latest_message.get("text").lower()
+
+        user_satisfaction = tracker.latest_message.get("text", "").lower().strip()
+        user_query = tracker.get_slot("user_query") or "HR / WorkElevate query"
 
         if user_satisfaction == "yes":
-            dispatcher.utter_message("Great! I'm glad I could help. Let me know if you need anything else.")
-            return [SlotSet("hr_query_completed", None), SlotSet("we_query_completed",None)]
-        elif user_satisfaction == "no":
-            dispatcher.utter_message("Sorry to hear that! I'll raise a ticket for you right away.")
-            return [FollowupAction("create_ticket_form"), SlotSet("hr_query_completed", None), SlotSet("we_query_completed",None), SlotSet("awaiting_satisfaction_feedback", None)]
+            dispatcher.utter_message(
+                "Great! I'm glad I could help. Let me know if you need anything else."
+            )
+            return [
+                SlotSet("hr_query_completed", None),
+                SlotSet("we_query_completed", None),
+                SlotSet("awaiting_satisfaction_feedback", None),
+                ActiveLoop(None),
+                FollowupAction("action_listen")
+            ]
 
-        else:
-            dispatcher.utter_message("I'm sorry, I didn't understand. Please type 'yes' if you're satisfied or 'no' if you'd like to raise a ticket.")
-            return []
+        if user_satisfaction == "no":
+            dispatcher.utter_message(
+                "Sorry to hear that! I'll raise a ticket for you right away."
+            )
+            return [
+                SlotSet("short_description", "Unresolved HR / WorkElevate query"),
+                SlotSet(
+                    "ticket_description",
+                    f"User query:\n{user_query}\n\nUser was not satisfied with the response."
+                ),
+                SlotSet("category", "Inquiry / Help"),
+
+                SlotSet("hr_query_completed", None),
+                SlotSet("we_query_completed", None),
+                SlotSet("awaiting_satisfaction_feedback", None),
+
+                ActiveLoop(None),
+                FollowupAction("create_ticket_form")
+            ]
+
+        dispatcher.utter_message(
+            "I'm sorry, I didn't understand. Please type 'yes' if you're satisfied "
+            "or 'no' if you'd like to raise a ticket."
+        )
+        return [FollowupAction("action_listen")]
+
 
 class ActionGetWorkElevateResponse(Action):
     def name(self):
@@ -516,12 +589,16 @@ class ActionGetWorkElevateResponse(Action):
             raw_answer = response_data.get("answer", "")
             clean_answer = re.search(r'</think>(.*)', raw_answer, re.DOTALL)
             dispatcher.utter_message(clean_answer.group(1).strip())
-            dispatcher.utter_message('\n \nAre you happy with the solution?')
+            dispatcher.utter_message('\n \nWE - Are you happy with the solution?')
         except Exception as e:
             dispatcher.utter_message("There was an error with the WE API request")
             print(f"Error: {e}")
         
-        return [SlotSet("we_query_completed",True)]
+        return [
+            SlotSet("we_query_completed",True),
+            SlotSet("awaiting_satisfaction_feedback", "we"), 
+            SlotSet("user_query", user_query)
+        ]
 
 class ActionFallback(Action):
     def name(self):
@@ -639,42 +716,54 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
         return "action_handle_user_satisfaction_troubleshooter"
 
     def run(self, dispatcher, tracker, domain):
-        user_text = tracker.latest_message.get("text", "").lower()
+
+        user_text = tracker.latest_message.get("text", "").lower().strip()
         stage = tracker.get_slot("awaiting_satisfaction_feedback")
+        user_query = tracker.get_slot("user_query") or "Technical issue"
 
         if user_text not in ["yes", "no"]:
             dispatcher.utter_message("Please reply with yes or no.")
             return [FollowupAction("action_listen")]
 
         if stage == "ts_not_found":
+
             if user_text == "yes":
-                dispatcher.utter_message(
-                    "I'll raise a ticket for you."
-                )
+                dispatcher.utter_message("I'll raise a ticket for you.")
+
                 return [
+                    SlotSet("short_description", "No troubleshooter available"),
+                    SlotSet(
+                        "ticket_description",
+                        f"User issue:\n{user_query}\n\n"
+                        "No relevant troubleshooter was found.\n"
+                        "User requested ticket creation."
+                    ),
+                    SlotSet("category", "Technical"),
+
                     SlotSet("awaiting_satisfaction_feedback", None),
                     SlotSet("troubleshooter_query_completed", None),
+
+                    ActiveLoop(None),
                     FollowupAction("create_ticket_form")
                 ]
 
             if user_text == "no":
-                dispatcher.utter_message(
-                    "Alright. Let me know if you need anything else."
-                )
+                dispatcher.utter_message("Alright. Let me know if you need anything else.")
                 return [
                     SlotSet("awaiting_satisfaction_feedback", None),
                     SlotSet("troubleshooter_query_completed", None),
+                    ActiveLoop(None),
                     FollowupAction("action_listen")
                 ]
 
         if stage == "ts_list":
+
             if user_text == "yes":
-                dispatcher.utter_message(
-                    "Great! Let me know if you need anything else."
-                )
+                dispatcher.utter_message("Great! Let me know if you need anything else.")
                 return [
                     SlotSet("awaiting_satisfaction_feedback", None),
                     SlotSet("troubleshooter_query_completed", None),
+                    ActiveLoop(None),
                     FollowupAction("action_listen")
                 ]
 
@@ -685,28 +774,384 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
                 ]
 
         if stage == "ts_sop":
+
             if user_text == "yes":
-                dispatcher.utter_message(
-                    "Glad that helped! Let me know if you need anything else."
-                )
+                dispatcher.utter_message("Glad that helped! Let me know if you need anything else.")
                 return [
                     SlotSet("awaiting_satisfaction_feedback", None),
                     SlotSet("troubleshooter_query_completed", None),
+                    ActiveLoop(None),
                     FollowupAction("action_listen")
                 ]
 
             if user_text == "no":
-                dispatcher.utter_message(
-                    "I’ll raise a ticket for you."
-                )
+                dispatcher.utter_message("I’ll raise a ticket for you.")
+
                 return [
+                    SlotSet("short_description", "Troubleshooter and SOP did not resolve issue"),
+                    SlotSet(
+                        "ticket_description",
+                        f"User issue:\n{user_query}\n"
+                        "Troubleshooter and SOP were provided.\n"
+                        "User is still facing the issue and requested ticket creation."
+                    ),
+                    SlotSet("category", "Technical"),
+
                     SlotSet("awaiting_satisfaction_feedback", None),
                     SlotSet("troubleshooter_query_completed", None),
+
+                    ActiveLoop(None),
                     FollowupAction("create_ticket_form")
                 ]
 
-        dispatcher.utter_message("Let’s start again.")
         return [
             SlotSet("awaiting_satisfaction_feedback", None),
+            ActiveLoop(None),
+            FollowupAction("action_listen")
+        ]
+
+
+# class ActionHandleSoftwareRequest(Action):
+#     def name(self):
+#         return "action_handle_software_request"
+
+#     def run(self, dispatcher, tracker, domain):
+#         software_query = tracker.get_slot("software_name")
+
+#         # if not software_query:
+#         #     dispatcher.utter_message("Please tell me which software you want to install.")
+#         #     return [
+#         #         ActiveLoop(None),
+#         #         FollowupAction("software_request_form")
+#         #     ]
+
+#         if not software_query:
+#             popular_softwares = [
+#                 "google chrome",
+#                 "microsoft teams",
+#                 "zoom",
+#                 "slack",
+#                 "adobe reader"
+#             ]
+
+#             buttons = [
+#                 {
+#                     "title": name.title(),
+#                     "payload": f'/inform{{"software_name":"{name}"}}'
+#                 }
+#                 for name in popular_softwares
+#             ]
+
+#             dispatcher.utter_message(
+#                 text="[SW NOT FOUND] - Which software would you like me to install?",
+#                 buttons=buttons
+#             )
+
+#             return [
+#                 ActiveLoop(None),
+#                 FollowupAction("action_listen")
+#             ]
+
+#         matches = resolve_software_matches(software_query.lower())
+
+#         if not matches:
+#             dispatcher.utter_message(
+#                 "I couldn’t find that software in our approved catalog. "
+#                 "Please specify the software name."
+#             )
+#             return [
+#                 SlotSet("software_name", None),
+#                 ActiveLoop(None),
+#                 FollowupAction("action_listen")
+#             ]
+
+#         if len(matches) > 1:
+#             buttons = [
+#                 {
+#                     "title": name.title(),
+#                     "payload": f'/inform{{"software_name":"{name}"}}'
+#                 }
+#                 for name, _ in matches
+#             ]
+
+#             dispatcher.utter_message(
+#                 text="I found multiple matching softwares. Please choose one:",
+#                 buttons=buttons
+#             )
+
+#             return [
+#                 ActiveLoop(None),
+#                 FollowupAction("action_listen")
+#             ]
+
+#         software_name, software_info = matches[0]
+
+#         events = [SlotSet("software_name", None)]
+
+#         if software_info.get("is_blacklisted"):
+#             dispatcher.utter_message(
+#                 f"{software_name.title()} is not allowed on company devices."
+#             )
+#             return events + [
+#                 ActiveLoop(None),
+#                 FollowupAction("action_listen")
+#             ]
+
+#         if software_info.get("is_restricted") or software_info.get("license_type") == "licensed":
+#             dispatcher.utter_message(
+#                 f"{software_name.title()} requires approval before installation.\n"
+#                 "I’ll raise a request for approval."
+#             )
+
+#             return events + [
+#                 SlotSet("short_description", f"Software request: {software_name.title()}"),
+#                 SlotSet(
+#                     "ticket_description",
+#                     f"User requested installation of {software_name.title()}.\n"
+#                     f"Source: {software_info.get('source')}\n"
+#                     f"License type: {software_info.get('license_type')}\n"
+#                     f"Approval required."
+#                 ),
+#                 SlotSet("category", "Software"),
+#                 ActiveLoop(None),
+#                 FollowupAction("create_ticket_form")
+#             ]
+
+#         dispatcher.utter_message(
+#             f"{software_name.title()} installation has been triggered successfully."
+#         )
+
+#         return events + [
+#             ActiveLoop(None),
+#             FollowupAction("action_listen")
+#         ]
+
+
+class ActionHandleSoftwareRequest(Action):
+    def name(self):
+        return "action_handle_software_request"
+
+    def run(self, dispatcher, tracker, domain):
+        software_query = tracker.get_slot("software_name")
+        
+        if not software_query:
+            dispatcher.utter_message("I couldn’t identify the software. I’ll raise a ticket for you.")
+
+            return [
+                SlotSet("short_description", "Software installation request - software not specified"),
+                SlotSet(
+                    "ticket_description",
+                    "User requested software installation but did not specify the software name.\n"
+                    "Please contact the user to confirm the required software."
+                ),
+                SlotSet("category", "Software"),
+                SlotSet("software_name", None),
+                ActiveLoop(None),
+                FollowupAction("create_ticket_form")
+            ]
+
+        matches = resolve_software_matches(software_query.lower())
+
+        if not matches:
+            dispatcher.utter_message(
+                "I couldn’t find that software in our approved catalog. I’ll raise a ticket for you."
+            )
+
+            return [
+                SlotSet("short_description", f"Software installation request - {software_query.title()} not found"),
+                SlotSet(
+                    "ticket_description",
+                    f"User requested installation of '{software_query.title()}'.\n"
+                    "The software was not found in the approved catalog."
+                ),
+                SlotSet("category", "Software"),
+                SlotSet("software_name", None),
+                ActiveLoop(None),
+                FollowupAction("create_ticket_form")
+            ]
+
+        if len(matches) > 1:
+            buttons = [
+                {
+                    "title": name.title(),
+                    "payload": f'/inform{{"software_name":"{name}"}}'
+                }
+                for name, _ in matches
+            ]
+
+            dispatcher.utter_message(
+                text="I found multiple matching softwares. Please choose one:",
+                buttons=buttons
+            )
+
+            return [
+                ActiveLoop(None),
+                FollowupAction("action_listen")
+            ]
+
+        software_name, software_info = matches[0]
+
+        events = [SlotSet("software_name", None)]
+
+        if software_info.get("is_blacklisted"):
+            dispatcher.utter_message(
+                f"{software_name.title()} is not allowed on company devices."
+            )
+            return events + [
+                ActiveLoop(None),
+                FollowupAction("action_listen")
+            ]
+
+        if software_info.get("is_restricted") or software_info.get("license_type") == "licensed":
+            dispatcher.utter_message(
+                f"{software_name.title()} requires approval before installation.\n"
+                "I’ll raise a request for approval."
+            )
+
+            return events + [
+                SlotSet("short_description", f"Software request: {software_name.title()}"),
+                SlotSet(
+                    "ticket_description",
+                    f"User requested installation of {software_name.title()}.\n"
+                    f"Source: {software_info.get('source')}\n"
+                    f"License type: {software_info.get('license_type')}\n"
+                    f"Approval required."
+                ),
+                SlotSet("category", "Software"),
+                ActiveLoop(None),
+                FollowupAction("create_ticket_form")
+            ]
+
+        dispatcher.utter_message(
+            f"{software_name.title()} installation has been triggered successfully."
+        )
+
+        return events + [
+            ActiveLoop(None),
+            FollowupAction("action_listen")
+        ]
+
+
+
+with open("softwares.json", "r", encoding="utf-8") as f:
+    SOFTWARES = json.load(f)
+
+
+def resolve_software_matches(software_name: str, limit: int = 5, threshold: int = 75):
+    matches = process.extract(software_name, SOFTWARES.keys(), limit=limit)
+
+    results = []
+    for best_match, score, _ in matches:
+        if score >= threshold:
+            results.append((best_match, SOFTWARES[best_match]))
+
+    return results
+
+
+
+
+
+
+
+
+
+
+
+#Working
+# with open("softwares.json", "r", encoding="utf-8") as f:
+#     SOFTWARES = json.load(f)
+
+# def resolve_software_name(software_name: str):
+#     match = process.extract(software_name, SOFTWARES.keys(), limit=1)
+
+#     best_match, score, index = match[0]
+
+#     if score < 75:
+#         return None, None
+
+#     return best_match, SOFTWARES[best_match]
+
+
+#working
+# class ActionHandleSoftwareRequest(Action):
+#     def name(self):
+#         return "action_handle_software_request"
+
+#     def run(self, dispatcher, tracker, domain):
+#         software_query = tracker.get_slot("software_name")
+
+#         if not software_query:
+#             dispatcher.utter_message(
+#                 "Please tell me which software you want to install."
+#             )
+#             return [
+#                 ActiveLoop(None),
+#                 FollowupAction("software_request_form")
+#             ]
+
+#         software_name, software_info = resolve_software_name(software_query.lower())
+
+#         events = [SlotSet("software_name", None)]
+
+#         if not software_name:
+#             dispatcher.utter_message(
+#                 "I couldn’t find that software in our approved catalog. "
+#                 "Please specify the software name."
+#             )
+#             return events + [
+#                 SlotSet("software_name", None),
+#                 ActiveLoop(None),
+#                 FollowupAction("action_listen")
+#             ]
+
+#         if software_info.get("is_blacklisted"):
+#             dispatcher.utter_message(
+#                 f"{software_name.title()} is not allowed on company devices."
+#             )
+#             return events + [
+#                 ActiveLoop(None),
+#                 FollowupAction("action_listen")
+#             ]
+
+#         if software_info.get("is_restricted") or software_info.get("license_type") == "licensed":
+#             dispatcher.utter_message(
+#                 f"{software_name.title()} requires approval before installation.\n"
+#                 "I’ll raise a request for approval."
+#             )
+
+#             return events + [
+#                 SlotSet("short_description", f"Software request: {software_name.title()}"),
+#                 SlotSet(
+#                     "ticket_description",
+#                     f"User requested installation of {software_name.title()}.\n"
+#                     f"Source: {software_info.get('source')}\n"
+#                     f"License type: {software_info.get('license_type')}\n"
+#                     f"Approval required."
+#                 ),
+#                 SlotSet("category", "Software"),
+#                 ActiveLoop(None),
+#                 FollowupAction("create_ticket_form")
+#             ]
+
+#         dispatcher.utter_message(
+#             f"{software_name.title()} installation has been triggered successfully."
+#         )
+
+#         return events + [
+#             ActiveLoop(None),
+#             FollowupAction("action_listen")
+#         ]
+
+
+class ActionEndChat(Action):
+    def name(self):
+        return "action_end_chat"
+
+    def run(self, dispatcher, tracker, domain):
+        dispatcher.utter_message("Thanks for chatting! Have a great day. 👋")
+
+        return [
+            ActiveLoop(None),
+            AllSlotsReset(),
             FollowupAction("action_listen")
         ]
