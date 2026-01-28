@@ -1,7 +1,8 @@
 import json, os
 from dotenv import load_dotenv
+from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
-from rapidfuzz import process
+from rapidfuzz import process, fuzz
 from sklearn.metrics.pairwise import cosine_similarity
 from rasa_sdk import Action
 from rasa_sdk.events import SlotSet, FollowupAction, ActiveLoop, AllSlotsReset
@@ -72,6 +73,7 @@ class ActionCreateTicket(Action):
 
         if "error" in result:
             dispatcher.utter_message(f"Failed to create the ticket : {result['error']}")
+            return [SlotSet("user_email", None)]
         else:
             ticket_id = result.get("number", result.get("request_number"))
             dispatcher.utter_message(f"Your ticket has been created with ticket Id - {ticket_id}")
@@ -277,7 +279,7 @@ def update_ticket_status(ticket_id, new_status):
         return {"error": f"No incident found with ID {ticket_id}"}
 
     status_map = {
-        "resolved": "5",
+        "resolved": "6",
         "closed": "7"
     }
 
@@ -294,7 +296,8 @@ def update_ticket_status(ticket_id, new_status):
         data.update({
             "close_code": "Resolved by caller",
             "close_notes": "Resolved via chatbot after user confirmation.",
-            "resolved_by": username
+            "resolved_by": username,
+            "resolved_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         })
 
     if new_status == "closed":
@@ -609,6 +612,58 @@ class ActionFallback(Action):
         return []
 
 
+# Working
+# class ActionFindTroubleshooter(Action):
+#     def name(self):
+#         return "action_find_troubleshooter"
+
+#     def run(self, dispatcher, tracker, domain):
+#         user_query = tracker.latest_message.get("text", "").strip()
+
+#         if not user_query:
+#             dispatcher.utter_message("Please describe your issue.")
+#             return [FollowupAction("action_listen")]
+
+#         try:
+#             response = requests.post(
+#                 "http://localhost:8000/match",
+#                 json={"query": user_query},
+#                 timeout=3
+#             )
+#             response.raise_for_status()
+#             data = response.json()
+#         except Exception as e:
+#             dispatcher.utter_message(
+#                 f"I'm having trouble analyzing your issue right now. ---- {e}"
+#             )
+#             return [FollowupAction("action_listen")]
+
+#         matches = data.get("matches", [])
+
+#         if not matches:
+#             dispatcher.utter_message(
+#                 "I couldn't find a matching troubleshooter. "
+#                 "Would you like me to create a ticket?"
+#             )
+#             return [
+#                 SlotSet("troubleshooter_query_completed", True),
+#                 SlotSet("awaiting_satisfaction_feedback", "ts_not_found"),
+#                 FollowupAction("action_listen")
+#             ]
+
+#         response_lines = ["I found these relevant troubleshooters:"]
+#         for match in matches:
+#             response_lines.append(f"- {match['name']}")
+    
+#         dispatcher.utter_message("\n".join(response_lines))
+#         dispatcher.utter_message("Did this solution work for you?")
+
+#         return [
+#             SlotSet("troubleshooter_query_completed", True),
+#             SlotSet("user_query", user_query),
+#             SlotSet("awaiting_satisfaction_feedback", "ts_list"),
+#             FollowupAction("action_listen")
+#         ]
 
 class ActionFindTroubleshooter(Action):
     def name(self):
@@ -648,16 +703,54 @@ class ActionFindTroubleshooter(Action):
                 FollowupAction("action_listen")
             ]
 
-        response_lines = ["I found these relevant troubleshooters:"]
+        buttons = []
         for match in matches:
-            response_lines.append(f"- {match['name']}")
-    
-        dispatcher.utter_message("\n".join(response_lines))
-        dispatcher.utter_message("Did this solution work for you?")
+            name = match["name"]
+            buttons.append({
+                "title": name,
+                "payload": f'/select_troubleshooter{{"selected_troubleshooter":"{name}"}}'
+            })
+
+        buttons.append({
+            "title": "My issue isn’t listed here",
+            "payload": f'/select_troubleshooter{{"selected_troubleshooter":"__NOT_LISTED__"}}'
+        })
+        dispatcher.utter_message(
+            text="I found these relevant troubleshooters. Please select one to run:",
+            buttons=buttons
+        )
 
         return [
             SlotSet("troubleshooter_query_completed", True),
             SlotSet("user_query", user_query),
+            SlotSet("awaiting_satisfaction_feedback", "ts_select"),
+            FollowupAction("action_listen")
+        ]
+
+class ActionRunSelectedTroubleshooter(Action):
+    def name(self):
+        return "action_run_selected_troubleshooter"
+
+    def run(self, dispatcher, tracker, domain):
+        t = tracker.get_slot("selected_troubleshooter")
+
+        if not t:
+            dispatcher.utter_message("No troubleshooter was selected.")
+            return [FollowupAction("action_listen")]
+
+        if t == "__NOT_LISTED__":
+            dispatcher.utter_message(
+                "Got it. I’ll look for a more detailed solution instead."
+            )
+            return [
+                SlotSet("awaiting_satisfaction_feedback", None),
+                FollowupAction("action_get_troubleshooter_sop")
+            ]
+
+        dispatcher.utter_message(f"I’ve run the troubleshooter: {t}.")
+        dispatcher.utter_message("Did this solution work for you?")
+
+        return [
             SlotSet("awaiting_satisfaction_feedback", "ts_list"),
             FollowupAction("action_listen")
         ]
@@ -724,6 +817,9 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
         if user_text not in ["yes", "no"]:
             dispatcher.utter_message("Please reply with yes or no.")
             return [FollowupAction("action_listen")]
+
+        if stage == "ts_select":
+            return [FollowupAction("action_run_selected_troubleshooter")]
 
         if stage == "ts_not_found":
 
@@ -811,129 +907,62 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
         ]
 
 
-# class ActionHandleSoftwareRequest(Action):
-#     def name(self):
-#         return "action_handle_software_request"
-
-#     def run(self, dispatcher, tracker, domain):
-#         software_query = tracker.get_slot("software_name")
-
-#         # if not software_query:
-#         #     dispatcher.utter_message("Please tell me which software you want to install.")
-#         #     return [
-#         #         ActiveLoop(None),
-#         #         FollowupAction("software_request_form")
-#         #     ]
-
-#         if not software_query:
-#             popular_softwares = [
-#                 "google chrome",
-#                 "microsoft teams",
-#                 "zoom",
-#                 "slack",
-#                 "adobe reader"
-#             ]
-
-#             buttons = [
-#                 {
-#                     "title": name.title(),
-#                     "payload": f'/inform{{"software_name":"{name}"}}'
-#                 }
-#                 for name in popular_softwares
-#             ]
-
-#             dispatcher.utter_message(
-#                 text="[SW NOT FOUND] - Which software would you like me to install?",
-#                 buttons=buttons
-#             )
-
-#             return [
-#                 ActiveLoop(None),
-#                 FollowupAction("action_listen")
-#             ]
-
-#         matches = resolve_software_matches(software_query.lower())
-
-#         if not matches:
-#             dispatcher.utter_message(
-#                 "I couldn’t find that software in our approved catalog. "
-#                 "Please specify the software name."
-#             )
-#             return [
-#                 SlotSet("software_name", None),
-#                 ActiveLoop(None),
-#                 FollowupAction("action_listen")
-#             ]
-
-#         if len(matches) > 1:
-#             buttons = [
-#                 {
-#                     "title": name.title(),
-#                     "payload": f'/inform{{"software_name":"{name}"}}'
-#                 }
-#                 for name, _ in matches
-#             ]
-
-#             dispatcher.utter_message(
-#                 text="I found multiple matching softwares. Please choose one:",
-#                 buttons=buttons
-#             )
-
-#             return [
-#                 ActiveLoop(None),
-#                 FollowupAction("action_listen")
-#             ]
-
-#         software_name, software_info = matches[0]
-
-#         events = [SlotSet("software_name", None)]
-
-#         if software_info.get("is_blacklisted"):
-#             dispatcher.utter_message(
-#                 f"{software_name.title()} is not allowed on company devices."
-#             )
-#             return events + [
-#                 ActiveLoop(None),
-#                 FollowupAction("action_listen")
-#             ]
-
-#         if software_info.get("is_restricted") or software_info.get("license_type") == "licensed":
-#             dispatcher.utter_message(
-#                 f"{software_name.title()} requires approval before installation.\n"
-#                 "I’ll raise a request for approval."
-#             )
-
-#             return events + [
-#                 SlotSet("short_description", f"Software request: {software_name.title()}"),
-#                 SlotSet(
-#                     "ticket_description",
-#                     f"User requested installation of {software_name.title()}.\n"
-#                     f"Source: {software_info.get('source')}\n"
-#                     f"License type: {software_info.get('license_type')}\n"
-#                     f"Approval required."
-#                 ),
-#                 SlotSet("category", "Software"),
-#                 ActiveLoop(None),
-#                 FollowupAction("create_ticket_form")
-#             ]
-
-#         dispatcher.utter_message(
-#             f"{software_name.title()} installation has been triggered successfully."
-#         )
-
-#         return events + [
-#             ActiveLoop(None),
-#             FollowupAction("action_listen")
-#         ]
-
-
 class ActionHandleSoftwareRequest(Action):
     def name(self):
         return "action_handle_software_request"
 
     def run(self, dispatcher, tracker, domain):
         software_query = tracker.get_slot("software_name")
-        
+        confirmed_software = tracker.get_slot("confirmed_software_name")
+
+        if confirmed_software:
+            software_name = confirmed_software
+            software_info = SOFTWARES[software_name]
+
+            events = [
+                SlotSet("software_name", None)
+            ]
+
+            if software_info.get("is_blacklisted"):
+                dispatcher.utter_message(
+                    f"{software_name.title()} is not allowed on company devices."
+                )
+                return events + [
+                    SlotSet("software_name", None),
+                    SlotSet("confirmed_software_name", None),
+                    ActiveLoop(None),
+                    FollowupAction("action_listen")
+                ]
+
+            if software_info.get("is_restricted") or software_info.get("license_type") == "licensed":
+                dispatcher.utter_message(
+                    f"{software_name.title()} requires approval before installation.\n"
+                    "I’ll raise a request for approval."
+                )
+
+                return events + [
+                    SlotSet("short_description", f"Software request: {software_name.title()}"),
+                    SlotSet(
+                        "ticket_description",
+                        f"User requested installation of {software_name.title()}.\n"
+                        f"Source: {software_info.get('source')}\n"
+                        f"License type: {software_info.get('license_type')}\n"
+                        f"Approval required."
+                    ),
+                    SlotSet("category", "Software"),
+                    ActiveLoop(None),
+                    FollowupAction("create_ticket_form")
+                ]
+
+            dispatcher.utter_message(
+                f"{software_name.title()} installation has been triggered successfully."
+            )
+
+            return events + [
+                ActiveLoop(None),
+                FollowupAction("action_listen")
+            ]
+
         if not software_query:
             dispatcher.utter_message("I couldn’t identify the software. I’ll raise a ticket for you.")
 
@@ -974,7 +1003,7 @@ class ActionHandleSoftwareRequest(Action):
             buttons = [
                 {
                     "title": name.title(),
-                    "payload": f'/inform{{"software_name":"{name}"}}'
+                    "payload": f'/inform{{"confirmed_software_name":"{name}"}}'
                 }
                 for name, _ in matches
             ]
@@ -998,6 +1027,7 @@ class ActionHandleSoftwareRequest(Action):
                 f"{software_name.title()} is not allowed on company devices."
             )
             return events + [
+                SlotSet("confirmed_software_name", None),
                 ActiveLoop(None),
                 FollowupAction("action_listen")
             ]
@@ -1027,6 +1057,7 @@ class ActionHandleSoftwareRequest(Action):
         )
 
         return events + [
+            SlotSet("confirmed_software_name", None),
             ActiveLoop(None),
             FollowupAction("action_listen")
         ]
@@ -1038,7 +1069,7 @@ with open("softwares.json", "r", encoding="utf-8") as f:
 
 
 def resolve_software_matches(software_name: str, limit: int = 5, threshold: int = 75):
-    matches = process.extract(software_name, SOFTWARES.keys(), limit=limit)
+    matches = process.extract(software_name, SOFTWARES.keys(), limit=limit, scorer = fuzz.partial_ratio)
 
     results = []
     for best_match, score, _ in matches:
@@ -1057,7 +1088,7 @@ def resolve_software_matches(software_name: str, limit: int = 5, threshold: int 
 
 
 
-#Working
+#Working (Number 1)
 # with open("softwares.json", "r", encoding="utf-8") as f:
 #     SOFTWARES = json.load(f)
 
@@ -1072,7 +1103,7 @@ def resolve_software_matches(software_name: str, limit: int = 5, threshold: int 
 #     return best_match, SOFTWARES[best_match]
 
 
-#working
+# working
 # class ActionHandleSoftwareRequest(Action):
 #     def name(self):
 #         return "action_handle_software_request"

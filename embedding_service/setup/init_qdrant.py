@@ -1,7 +1,10 @@
 import json, os
+from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, HnswConfigDiff, PointStruct
 from sentence_transformers import SentenceTransformer
+
+load_dotenv()
 
 client = QdrantClient(host=os.getenv("QDRANT_HOST"), port= os.getenv("QDRANT_PORT"))
 model = SentenceTransformer("all-mpnet-base-v2")

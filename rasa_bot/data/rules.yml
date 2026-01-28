@@ -104,6 +104,14 @@ rules:
     steps:
       - intent: user_satisfaction_response
       - action: action_handle_user_satisfaction_troubleshooter
+  
+  - rule: Run selected troubleshooter
+    condition:
+      - slot_was_set:
+          - awaiting_satisfaction_feedback: "ts_select"
+    steps:
+      - intent: select_troubleshooter
+      - action: action_run_selected_troubleshooter
 
   - rule: Handle software request
     steps:

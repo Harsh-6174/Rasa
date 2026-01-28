@@ -11,6 +11,12 @@
     "is_restricted": false,
     "is_blacklisted": false
   },
+  "Microsoft Teams": {
+    "source": "workelevate",
+    "license_type": "standard",
+    "is_restricted": false,
+    "is_blacklisted": false
+  },
   "intellij idea": {
     "source": "workelevate",
     "license_type": "licensed",

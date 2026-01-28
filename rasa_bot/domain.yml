@@ -16,6 +16,8 @@ intents:
   - fallback
   - greet
   - report_issue
+  - exit_chat
+  - select_troubleshooter
 
 entities:
   - ticket_type
@@ -26,6 +28,9 @@ entities:
   - ticket_description
   - category
   - software_name
+  - new_status
+  - confirmed_software_name
+  - selected_troubleshooter
 
 slots:
   ticket_type:
@@ -68,6 +73,10 @@ slots:
     type: text
   requested_software_type:
     type: text
+  selected_troubleshooter:
+    type: text
+  confirmed_software_name:
+    type: text
 
 responses:
   utter_greet_user:
@@ -102,6 +111,11 @@ responses:
   
   utter_ask_new_status:
     - text: "Please provide the new status for the ticket."
+      buttons:
+      - title: "Resolved"
+        payload: '/inform{"new_status":"resolved"}'
+      - title: "Closed"
+        payload: '/inform{"new_status":"closed"}'
 
   utter_ask_ticket_description:
     - text: "Please provide a detailed description of the issue."
@@ -133,7 +147,18 @@ responses:
     - text: "Thanks for chatting! Have a great day."
 
   utter_ask_category:
-    - text: "Please specify the category of the issue. Database | Hardware | Inquiry/Help | Network | Software."
+  - text: "Please select the category of the issue:"
+    buttons:
+      - title: "Database"
+        payload: '/inform{"category":"Database"}'
+      - title: "Hardware"
+        payload: '/inform{"category":"Hardware"}'
+      - title: "Inquiry / Help"
+        payload: '/inform{"category":"Inquiry/Help"}'
+      - title: "Network"
+        payload: '/inform{"category":"Network"}'
+      - title: "Software"
+        payload: '/inform{"category":"Software"}'
 
 forms:
   create_ticket_form:
@@ -163,7 +188,12 @@ forms:
       ticket_id_update:
         - type: from_text
       new_status:
+        - type: from_entity
+          entity: new_status
         - type: from_text
+          conditions:
+            - active_loop: update_ticket_status_form
+            - requested_slot: new_status
 
   fetch_last_tickets:
     required_slots:
@@ -182,6 +212,9 @@ forms:
         - type: from_entity
           entity: software_name
         - type: from_text
+          condition:
+            - active_loop: software_request_form
+            - requested_slot: software_name
 
 actions:
   - action_create_ticket
@@ -199,3 +232,4 @@ actions:
   - action_handle_user_satisfaction_troubleshooter
   - action_handle_software_request
   - action_end_chat
+  - action_run_selected_troubleshooter

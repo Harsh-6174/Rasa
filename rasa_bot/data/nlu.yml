@@ -136,6 +136,7 @@ nlu:
     examples: |
       - install [google chrome](software_name)
       - install [microsoft teams](software_name)
+      - want to install [vscode](software_name)
       - want to install [visual studio code](software_name)
       - please install [pycharm](software_name)
       - install [postman](software_name)
