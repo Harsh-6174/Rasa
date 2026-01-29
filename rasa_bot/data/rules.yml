@@ -126,9 +126,37 @@ rules:
       - action: action_handle_software_request
   
   - rule: Handle software selection via inform
+    condition:
+      - slot_was_set:
+          - software_name
     steps:
       - intent: inform
       - action: action_handle_software_request
+
+  - rule: Start printer configuration
+    steps:
+      - intent: request_printer
+      - action: printer_email_form
+      - active_loop: printer_email_form
+
+  - rule: Submit printer email
+    steps:
+      - action: printer_email_form
+      - active_loop: null
+      - action: utter_ask_printer_location
+
+  - rule: Handle printer location
+    condition:
+    - slot_was_set:
+        - printer_location
+    steps:
+      - intent: inform
+      - action: action_list_printers_by_location
+
+  - rule: Handle printer selection
+    steps:
+      - intent: select_printer
+      - action: action_trigger_printer_installation
 
   - rule: End chat
     steps:

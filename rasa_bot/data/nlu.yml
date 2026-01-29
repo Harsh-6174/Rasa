@@ -150,6 +150,34 @@ nlu:
       - need new software
       - install application
 
+  - intent: request_printer
+    examples: |
+      - I want to configure a printer
+      - I want to setup a printer
+      - I need help with printer configuration
+      - can you configure a printer for me
+      - please setup a printer
+      - help me install a printer
+      - I want to install a printer on my system
+      - add a printer to my laptop
+      - add printer to my system
+      - printer installation required
+      - printer setup required
+      - need printer access
+      - need to connect to office printer
+      - connect printer to my system
+      - setup office printer
+      - configure office printer
+      - install office printer
+      - I am unable to add a printer
+      - how do I setup a printer
+      - how can I configure printer
+      - printer is not configured
+      - I need a printer configured for my system
+      - want to use office printer
+      - need printer configured for work
+      - please configure printer for me
+
   - intent: exit_chat
     examples: |
       - bye
@@ -180,28 +208,6 @@ nlu:
       - I'm good, thanks
       - no, that's all
       - nothing more, thanks
-
-  # - intent: greet
-  #   examples: |
-  #     - hi
-  #     - hello
-  #     - hey
-  #     - hey there
-  #     - hello there
-  #     - good morning
-  #     - good evening
-
-  # - intent: user_satisfaction_response
-  #   examples: |
-  #     - yes
-  #     - yeah
-  #     - yup
-  #     - yes please
-  #     - no
-  #     - nope
-  #     - not really
-  #     - no thanks
-
 
   - intent: greet
     examples: |

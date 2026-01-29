@@ -12,6 +12,8 @@ intents:
   - user_satisfaction_response
   - ask_workelevate_queries
   - request_software
+  - select_printer
+  - request_printer
   - inform
   - fallback
   - greet
@@ -28,6 +30,8 @@ entities:
   - ticket_description
   - category
   - software_name
+  - printer_location
+  - selected_printer
   - new_status
   - confirmed_software_name
   - selected_troubleshooter
@@ -70,6 +74,10 @@ slots:
   troubleshooter_query_completed:
     type: bool
   software_name:
+    type: text
+  printer_location:
+    type: text
+  selected_printer:
     type: text
   requested_software_type:
     type: text
@@ -159,6 +167,16 @@ responses:
         payload: '/inform{"category":"Network"}'
       - title: "Software"
         payload: '/inform{"category":"Software"}'
+  
+  utter_ask_printer_location:
+  - text: "Please select your base location:"
+    buttons:
+      - title: "Bangalore"
+        payload: '/inform{{"printer_location":"bangalore"}}'
+      - title: "Mumbai"
+        payload: '/inform{{"printer_location":"mumbai"}}'
+      - title: "Noida"
+        payload: '/inform{{"printer_location":"noida"}}'
 
 forms:
   create_ticket_form:
@@ -216,6 +234,13 @@ forms:
             - active_loop: software_request_form
             - requested_slot: software_name
 
+  printer_email_form:
+    required_slots:
+      user_email:
+        - type: from_entity
+          entity: user_email
+        - type: from_text
+
 actions:
   - action_create_ticket
   - action_fetch_ticket
@@ -233,3 +258,5 @@ actions:
   - action_handle_software_request
   - action_end_chat
   - action_run_selected_troubleshooter
+  - action_list_printers_by_location
+  - action_trigger_printer_installation

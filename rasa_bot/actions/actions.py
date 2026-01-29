@@ -112,7 +112,8 @@ def fetch_ticket_by_email(user_email):
             "1": "New",
             "2": "In Progress",
             "3": "On Hold",
-            "4": "Closed"
+            "6": "Resolved",
+            "7": "Closed"
         }
 
     url = f"https://{instance}.service-now.com/api/now/table/sys_user?sysparm_query=email={user_email}"
@@ -122,7 +123,11 @@ def fetch_ticket_by_email(user_email):
         data = response.json()
         if "result" in data:
             sys_id = data["result"][0]["sys_id"]
-            incidents_url = f"https://{instance}.service-now.com/api/now/table/incident?sysparm_query=caller_id={sys_id}&sysparm_orderby=sys_created_onDESC"
+            incidents_url = (
+                f"https://{instance}.service-now.com/api/now/table/incident"
+                f"?sysparm_query=caller_id={sys_id}^ORDERBYDESCsys_updated_on"
+                f"&sysparm_limit=1"
+            )
             incidents_response = requests.get(incidents_url, auth=HTTPBasicAuth(username,password), headers=headers)
 
             if incidents_response.status_code == 200:
@@ -144,66 +149,134 @@ def fetch_ticket_by_email(user_email):
     else:
         return {"error": "Error fetching user data"}
 
+
+# class ActionFetchTicket(Action):
+#     def name(self):
+#         return "action_fetch_ticket"
+
+#     def run(self, dispatcher, tracker, domain):
+#         ticket_id_or_email = tracker.get_slot("ticket_id_or_email")
+#         ticket_id = tracker.get_slot("ticket_id")
+#         user_email = tracker.get_slot("user_email")
+
+#         incident_id_regex = r"\bINC\d{6,}\b"
+#         email_id_regex = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
+        
+#         incident_id_match = re.search(incident_id_regex, ticket_id_or_email)
+#         events = []
+#         if incident_id_match:
+#             ticket_id = incident_id_match.group(0)
+#             # tracker.slots["ticket_id"] = ticket_id
+#             events.append(SlotSet("ticket_id", ticket_id))
+
+#         email_match = re.search(email_id_regex, ticket_id_or_email)
+#         if email_match:
+#             user_email = email_match.group(0)
+#             # tracker.slots["user_email"] = user_email
+#             events.append(SlotSet("user_email", user_email))
+
+#         if ticket_id:
+#             result = fetch_ticket_by_id(ticket_id)
+#             if "error" in result:
+#                 dispatcher.utter_message(f"Failed to fetch the ticket: {result['error']}")
+#             else:
+#                 dispatcher.utter_message(f"Details of ticket {ticket_id} : \n")
+#                 ticket_id = result.get("ticket_id")
+#                 description = result.get("description")
+#                 status = result.get("status")
+#                 dispatcher.utter_message(f"Ticket Id - {ticket_id}\nDescription - {description}\nStatus - {status}")
+#                 return [SlotSet("ticket_type",None), SlotSet("ticket_id",None), SlotSet("user_email",None)]
+#             return [SlotSet("ticket_type",None), SlotSet("ticket_id",None), SlotSet("user_email",None)]
+#         elif user_email:
+#             result = fetch_ticket_by_email(user_email)
+#             if "error" in result:
+#                 dispatcher.utter_message(f"Failed to fetch the ticket : {result['error']}")
+#             else:
+#                 if result:
+#                     dispatcher.utter_message(f"Latest ticket associated with email {user_email} : \n")
+#                     ticket_id = result.get("ticket_id")
+#                     description = result.get("description")
+#                     status = result.get("status")
+#                     dispatcher.utter_message(f"Ticket Id - {ticket_id}\nDescription - {description}\nStatus - {status}")
+#                 else:
+#                     dispatcher.utter_message(f"No tickets found for email {user_email}")
+#         else:
+#             dispatcher.utter_message("Please provide either a ticket ID or an email Id to fetch the tickets.")
+        
+#         events.extend([
+#                     SlotSet("ticket_id_or_email", None),
+#                     SlotSet("ticket_id", None),
+#                     SlotSet("user_email", None),
+#                 ])
+
+#         return events        
+
 class ActionFetchTicket(Action):
     def name(self):
         return "action_fetch_ticket"
 
     def run(self, dispatcher, tracker, domain):
         ticket_id_or_email = tracker.get_slot("ticket_id_or_email")
-        ticket_id = tracker.get_slot("ticket_id")
-        user_email = tracker.get_slot("user_email")
+        ticket_id = None
+        user_email = None
 
-        incident_id_regex = r"\bINC\d{6,}\b"
-        email_id_regex = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
-        
-        incident_id_match = re.search(incident_id_regex, ticket_id_or_email)
         events = []
-        if incident_id_match:
-            ticket_id = incident_id_match.group(0)
-            # tracker.slots["ticket_id"] = ticket_id
-            events.append(SlotSet("ticket_id", ticket_id))
 
-        email_match = re.search(email_id_regex, ticket_id_or_email)
-        if email_match:
-            user_email = email_match.group(0)
-            # tracker.slots["user_email"] = user_email
-            events.append(SlotSet("user_email", user_email))
+        if ticket_id_or_email:
+            incident_id_regex = r"\bINC\d{6,}\b"
+            email_id_regex = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
+
+            incident_id_match = re.search(incident_id_regex, ticket_id_or_email)
+            if incident_id_match:
+                ticket_id = incident_id_match.group(0)
+                events.append(SlotSet("ticket_id", ticket_id))
+
+            email_match = re.search(email_id_regex, ticket_id_or_email)
+            if email_match:
+                user_email = email_match.group(0)
+                events.append(SlotSet("user_email", user_email))
 
         if ticket_id:
             result = fetch_ticket_by_id(ticket_id)
             if "error" in result:
                 dispatcher.utter_message(f"Failed to fetch the ticket: {result['error']}")
             else:
-                dispatcher.utter_message(f"Details of ticket {ticket_id} : \n")
-                ticket_id = result.get("ticket_id")
-                description = result.get("description")
-                status = result.get("status")
-                dispatcher.utter_message(f"Ticket Id - {ticket_id}\nDescription - {description}\nStatus - {status}")
-                return [SlotSet("ticket_type",None), SlotSet("ticket_id",None), SlotSet("user_email",None)]
-            return [SlotSet("ticket_type",None), SlotSet("ticket_id",None), SlotSet("user_email",None)]
+                dispatcher.utter_message(f"Details of ticket {ticket_id}:\n")
+                dispatcher.utter_message(
+                    f"Ticket Id - {result.get('ticket_id')}\n"
+                    f"Description - {result.get('description')}\n"
+                    f"Status - {result.get('status')}"
+                )
+
         elif user_email:
             result = fetch_ticket_by_email(user_email)
             if "error" in result:
-                dispatcher.utter_message(f"Failed to fetch the ticket : {result['error']}")
+                dispatcher.utter_message(f"Failed to fetch the ticket: {result['error']}")
             else:
                 if result:
-                    dispatcher.utter_message(f"Latest ticket associated with email {user_email} : \n")
-                    ticket_id = result.get("ticket_id")
-                    description = result.get("description")
-                    status = result.get("status")
-                    dispatcher.utter_message(f"Ticket Id - {ticket_id}\nDescription - {description}\nStatus - {status}")
+                    dispatcher.utter_message(f"Latest ticket associated with email {user_email}:\n")
+                    dispatcher.utter_message(
+                        f"Ticket Id - {result.get('ticket_id')}\n"
+                        f"Description - {result.get('description')}\n"
+                        f"Status - {result.get('status')}"
+                    )
                 else:
                     dispatcher.utter_message(f"No tickets found for email {user_email}")
-        else:
-            dispatcher.utter_message("Please provide either a ticket ID or an email Id to fetch the tickets.")
-        
-        events.extend([
-                    SlotSet("ticket_id_or_email", None),
-                    SlotSet("ticket_id", None),
-                    SlotSet("user_email", None),
-                ])
 
-        return events        
+        else:
+            dispatcher.utter_message(
+                "Please provide either a ticket ID or an email ID to fetch the tickets."
+            )
+
+        events.extend([
+            SlotSet("ticket_type", None),
+            SlotSet("ticket_id_or_email", None),
+            SlotSet("ticket_id", None),
+            SlotSet("user_email", None),
+        ])
+
+        return events
+
 
 def update_ticket_description(ticket_id, new_description):   
     sys_id = None
@@ -466,47 +539,6 @@ class ActionGetHRResponse(Action):
             SlotSet("user_query", user_query)
         ]
 
-
-# class ActionHandleUserSatisfaction(Action):
-#     def name(self):
-#         return "action_handle_user_satisfaction"
-    
-#     def run(self, dispatcher, tracker, domain):
-
-#         user_satisfaction = tracker.latest_message.get("text", "").lower().strip()
-
-#         if user_satisfaction == "yes":
-#             dispatcher.utter_message(
-#                 "Great! I'm glad I could help. Let me know if you need anything else."
-#             )
-#             return [
-#                 SlotSet("hr_query_completed", None),
-#                 SlotSet("we_query_completed", None),
-#                 SlotSet("awaiting_satisfaction_feedback", None),
-#                 ActiveLoop(None),
-#                 FollowupAction("action_listen")
-#             ]
-
-#         if user_satisfaction == "no":
-#             dispatcher.utter_message(
-#                 "Sorry to hear that! I'll raise a ticket for you right away."
-#             )
-#             return [
-#                 SlotSet("hr_query_completed", None),
-#                 SlotSet("we_query_completed", None),
-#                 SlotSet("awaiting_satisfaction_feedback", None),
-#                 ActiveLoop(None),
-#                 FollowupAction("create_ticket_form")
-#             ]
-
-#         dispatcher.utter_message(
-#             "I'm sorry, I didn't understand. Please type 'yes' if you're satisfied "
-#             "or 'no' if you'd like to raise a ticket."
-#         )
-#         return [
-#             FollowupAction("action_listen")
-#         ]
-
 class ActionHandleUserSatisfaction(Action):
     def name(self):
         return "action_handle_user_satisfaction"
@@ -755,8 +787,6 @@ class ActionRunSelectedTroubleshooter(Action):
             FollowupAction("action_listen")
         ]
 
-
-
 class ActionGetTroubleshooterSOP(Action):
     def name(self):
         return "action_get_troubleshooter_sop"
@@ -802,7 +832,6 @@ class ActionGetTroubleshooterSOP(Action):
             SlotSet("awaiting_satisfaction_feedback", "ts_sop"),
             FollowupAction("action_listen")
         ]
-
 
 class ActionHandleUserSatisfactionTroubleShooter(Action):
     def name(self):
@@ -905,7 +934,6 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
             ActiveLoop(None),
             FollowupAction("action_listen")
         ]
-
 
 class ActionHandleSoftwareRequest(Action):
     def name(self):
@@ -1062,11 +1090,8 @@ class ActionHandleSoftwareRequest(Action):
             FollowupAction("action_listen")
         ]
 
-
-
 with open("softwares.json", "r", encoding="utf-8") as f:
     SOFTWARES = json.load(f)
-
 
 def resolve_software_matches(software_name: str, limit: int = 5, threshold: int = 75):
     matches = process.extract(software_name, SOFTWARES.keys(), limit=limit, scorer = fuzz.partial_ratio)
@@ -1078,9 +1103,67 @@ def resolve_software_matches(software_name: str, limit: int = 5, threshold: int 
 
     return results
 
+class ActionListPrintersByLocation(Action):
+    def name(self):
+        return "action_list_printers_by_location"
 
+    def run(self, dispatcher, tracker, domain):
+        location = tracker.get_slot("printer_location")
 
+        if not location:
+            dispatcher.utter_message("Please select a location.")
+            return []
 
+        with open("printers.json", "r", encoding="utf-8") as f:
+            printers_data = json.load(f)
+
+        printers = printers_data.get(location.lower())
+
+        if not printers:
+            dispatcher.utter_message(
+                f"No printers found for {location.title()}."
+            )
+            return []
+
+        buttons = [
+            {
+                "title": f"{p['id']} — {p['name']}",
+                "payload": f'/select_printer{{"selected_printer":"{p["id"]}"}}'
+            }
+            for p in printers
+        ]
+
+        dispatcher.utter_message(
+            text="Please select a printer to install:",
+            buttons=buttons
+        )
+
+        return []
+
+class ActionTriggerPrinterInstallation(Action):
+    def name(self):
+        return "action_trigger_printer_installation"
+
+    def run(self, dispatcher, tracker, domain):
+        printer = tracker.get_slot("selected_printer")
+        email = tracker.get_slot("user_email")
+        location = tracker.get_slot("printer_location")
+
+        if not printer or not email or not location:
+            dispatcher.utter_message("Missing details to proceed.")
+            return []
+
+        dispatcher.utter_message(
+            "Printer installation has been triggered successfully."
+        )
+        dispatcher.utter_message(
+            "Is there anything else I can help you with?"
+        )
+
+        return [
+            SlotSet("printer_location", None),
+            SlotSet("selected_printer", None)
+        ]
 
 
 
@@ -1101,7 +1184,6 @@ def resolve_software_matches(software_name: str, limit: int = 5, threshold: int 
 #         return None, None
 
 #     return best_match, SOFTWARES[best_match]
-
 
 # working
 # class ActionHandleSoftwareRequest(Action):
@@ -1186,3 +1268,17 @@ class ActionEndChat(Action):
             AllSlotsReset(),
             FollowupAction("action_listen")
         ]
+
+
+
+
+
+
+
+
+
+# Ask if anything else to do
+# end convo after a certain time period (inactivity)
+# end convo button
+# not allow new message after ending in same session
+# If user wants to see ticket and doesn't know the ID, use their email to fetch ticket numbers and let them choose
