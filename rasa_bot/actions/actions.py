@@ -78,7 +78,7 @@ class ActionCreateTicket(Action):
             ticket_id = result.get("number", result.get("request_number"))
             dispatcher.utter_message(f"Your ticket has been created with ticket Id - {ticket_id}")
 
-        # return [SlotSet("user_email", None), SlotSet("short_description", None), SlotSet("ticket_description", None), SlotSet("category", None)]
+        dispatcher.utter_message("Is there anything else I can help you with?")
         return [SlotSet("short_description", None), SlotSet("ticket_description", None), SlotSet("category", None)]
 
 
@@ -316,23 +316,35 @@ class ActionUpdateTicketDescription(Action):
         return "action_update_ticket_description"
 
     def run(self, dispatcher, tracker, domain):
+        user_email = tracker.get_slot("user_email")
         ticket_id = tracker.get_slot("ticket_id_update")
         new_description = tracker.get_slot("new_description")
 
-        if not ticket_id or not new_description:
-            dispatcher.utter_message("Please provide the ticket ID, ticket type (incident or service_request), and a new description to update.")
-            return [SlotSet("ticket_id",None), SlotSet("new_description",None)]
+        if not user_email or not ticket_id or not new_description:
+            dispatcher.utter_message("Please provide your email ID, ticket ID and a new description.")
+            return [
+                SlotSet("user_email", None),
+                SlotSet("ticket_id_update", None),
+                SlotSet("new_description", None),
+            ]
         
         result = update_ticket_description(ticket_id, new_description)
 
         if "error" in result:
             dispatcher.utter_message(f"Failed to update the ticket : {result['error']}")
+            return [
+                SlotSet("user_email", None),
+                SlotSet("ticket_id_update", None),
+                SlotSet("new_description", None),
+            ]
         else:
             ticket_id = result.get("ticket_id")
             dispatcher.utter_message(text=f"Ticket ID {ticket_id} has been updated with the new description")
-            SlotSet("ticket_id_update", None)
         
-        return [SlotSet("ticket_id_update",None), SlotSet("new_description",None)]
+        return [
+            SlotSet("ticket_id_update", None),
+            SlotSet("new_description", None),
+        ]
 
 def update_ticket_status(ticket_id, new_status):
     sys_id = None
@@ -403,24 +415,35 @@ class ActionUpdateTicketStatus(Action):
         return "action_update_ticket_status"
 
     def run(self, dispatcher, tracker, domain):
+        user_email = tracker.get_slot("user_email")
         ticket_id = tracker.get_slot("ticket_id_update")
         new_status = tracker.get_slot("new_status")
 
-        if not ticket_id or not new_status:
-            dispatcher.utter_message("Please provide the ticket ID, and the new status (resolved or canceled).")
-            return [SlotSet("new_status", None)]
+        if not user_email or not ticket_id or not new_status:
+            dispatcher.utter_message("Please provide your email ID, ticket ID and the new status.")
+            return [
+                SlotSet("user_email", None),
+                SlotSet("ticket_id_update", None),
+                SlotSet("new_status", None),
+            ]
 
         result = update_ticket_status(ticket_id, new_status)
 
         if "error" in result:
             dispatcher.utter_message(f"Failed to update the ticket status: {result['error']}")
-            SlotSet("ticket_id_update", None)
-            SlotSet("new_status", None)
+            return [
+                SlotSet("user_email", None),
+                SlotSet("ticket_id_update", None),
+                SlotSet("new_status", None),
+            ]
         else:
             ticket_id = result.get("ticket_id")
             dispatcher.utter_message(text=f"Ticket ID {ticket_id} has been updated to {new_status}.")
         
-        return [SlotSet("ticket_id_update", None), SlotSet("new_status", None)]
+        return [
+            SlotSet("ticket_id_update", None),
+            SlotSet("new_status", None),
+        ]
 
 def fetch_user_tickets(user_email, num_tickets = 5):    
     url_sys_id = f"https://{instance}.service-now.com/api/now/table/sys_user?sysparm_query=email={user_email}"
@@ -913,7 +936,7 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
                 dispatcher.utter_message("I’ll raise a ticket for you.")
 
                 return [
-                    SlotSet("short_description", "Troubleshooter and SOP did not resolve issue"),
+                    SlotSet("short_description", f"{user_query} - Troubleshooter and SOP did not resolve issue"),
                     SlotSet(
                         "ticket_description",
                         f"User issue:\n{user_query}\n"
@@ -1093,7 +1116,7 @@ class ActionHandleSoftwareRequest(Action):
 with open("softwares.json", "r", encoding="utf-8") as f:
     SOFTWARES = json.load(f)
 
-def resolve_software_matches(software_name: str, limit: int = 5, threshold: int = 75):
+def resolve_software_matches(software_name: str, limit: int = 5, threshold: int = 85):
     matches = process.extract(software_name, SOFTWARES.keys(), limit=limit, scorer = fuzz.partial_ratio)
 
     results = []
@@ -1164,97 +1187,6 @@ class ActionTriggerPrinterInstallation(Action):
             SlotSet("printer_location", None),
             SlotSet("selected_printer", None)
         ]
-
-
-
-
-
-
-
-#Working (Number 1)
-# with open("softwares.json", "r", encoding="utf-8") as f:
-#     SOFTWARES = json.load(f)
-
-# def resolve_software_name(software_name: str):
-#     match = process.extract(software_name, SOFTWARES.keys(), limit=1)
-
-#     best_match, score, index = match[0]
-
-#     if score < 75:
-#         return None, None
-
-#     return best_match, SOFTWARES[best_match]
-
-# working
-# class ActionHandleSoftwareRequest(Action):
-#     def name(self):
-#         return "action_handle_software_request"
-
-#     def run(self, dispatcher, tracker, domain):
-#         software_query = tracker.get_slot("software_name")
-
-#         if not software_query:
-#             dispatcher.utter_message(
-#                 "Please tell me which software you want to install."
-#             )
-#             return [
-#                 ActiveLoop(None),
-#                 FollowupAction("software_request_form")
-#             ]
-
-#         software_name, software_info = resolve_software_name(software_query.lower())
-
-#         events = [SlotSet("software_name", None)]
-
-#         if not software_name:
-#             dispatcher.utter_message(
-#                 "I couldn’t find that software in our approved catalog. "
-#                 "Please specify the software name."
-#             )
-#             return events + [
-#                 SlotSet("software_name", None),
-#                 ActiveLoop(None),
-#                 FollowupAction("action_listen")
-#             ]
-
-#         if software_info.get("is_blacklisted"):
-#             dispatcher.utter_message(
-#                 f"{software_name.title()} is not allowed on company devices."
-#             )
-#             return events + [
-#                 ActiveLoop(None),
-#                 FollowupAction("action_listen")
-#             ]
-
-#         if software_info.get("is_restricted") or software_info.get("license_type") == "licensed":
-#             dispatcher.utter_message(
-#                 f"{software_name.title()} requires approval before installation.\n"
-#                 "I’ll raise a request for approval."
-#             )
-
-#             return events + [
-#                 SlotSet("short_description", f"Software request: {software_name.title()}"),
-#                 SlotSet(
-#                     "ticket_description",
-#                     f"User requested installation of {software_name.title()}.\n"
-#                     f"Source: {software_info.get('source')}\n"
-#                     f"License type: {software_info.get('license_type')}\n"
-#                     f"Approval required."
-#                 ),
-#                 SlotSet("category", "Software"),
-#                 ActiveLoop(None),
-#                 FollowupAction("create_ticket_form")
-#             ]
-
-#         dispatcher.utter_message(
-#             f"{software_name.title()} installation has been triggered successfully."
-#         )
-
-#         return events + [
-#             ActiveLoop(None),
-#             FollowupAction("action_listen")
-#         ]
-
 
 class ActionEndChat(Action):
     def name(self):

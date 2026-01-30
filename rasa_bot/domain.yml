@@ -121,9 +121,9 @@ responses:
     - text: "Please provide the new status for the ticket."
       buttons:
       - title: "Resolved"
-        payload: '/inform{"new_status":"resolved"}'
+        payload: '/inform{{"new_status":"resolved"}}'
       - title: "Closed"
-        payload: '/inform{"new_status":"closed"}'
+        payload: '/inform{{"new_status":"closed"}}'
 
   utter_ask_ticket_description:
     - text: "Please provide a detailed description of the issue."
@@ -141,15 +141,15 @@ responses:
     - text: "[UTTER] - Which software would you like me to install?"
       buttons:
         - title: "Google Chrome"
-          payload: '/inform{"software_name":"google chrome"}'
+          payload: '/inform{{"software_name":"google chrome"}}'
         - title: "Microsoft Teams"
-          payload: '/inform{"software_name":"microsoft teams"}'
+          payload: '/inform{{"software_name":"microsoft teams"}}'
         - title: "Zoom"
-          payload: '/inform{"software_name":"zoom"}'
+          payload: '/inform{{"software_name":"zoom"}}'
         - title: "Slack"
-          payload: '/inform{"software_name":"slack"}'
+          payload: '/inform{{"software_name":"slack"}}'
         - title: "Adobe Reader"
-          payload: '/inform{"software_name":"adobe reader"}'
+          payload: '/inform{{"software_name":"adobe reader"}}'
 
   utter_goodbye:
     - text: "Thanks for chatting! Have a great day."
@@ -158,15 +158,15 @@ responses:
   - text: "Please select the category of the issue:"
     buttons:
       - title: "Database"
-        payload: '/inform{"category":"Database"}'
+        payload: '/inform{{"category":"Database"}}'
       - title: "Hardware"
-        payload: '/inform{"category":"Hardware"}'
+        payload: '/inform{{"category":"Hardware"}}'
       - title: "Inquiry / Help"
-        payload: '/inform{"category":"Inquiry/Help"}'
+        payload: '/inform{{"category":"Inquiry/Help"}}'
       - title: "Network"
-        payload: '/inform{"category":"Network"}'
+        payload: '/inform{{"category":"Network"}}'
       - title: "Software"
-        payload: '/inform{"category":"Software"}'
+        payload: '/inform{{"category":"Software"}}'
   
   utter_ask_printer_location:
   - text: "Please select your base location:"
@@ -196,6 +196,8 @@ forms:
 
   update_ticket_form:
     required_slots:
+      user_email:
+        - type: from_text
       ticket_id_update:
         - type: from_text
       new_description:
@@ -203,6 +205,8 @@ forms:
 
   update_ticket_status_form:
     required_slots:
+      user_email:
+        - type: from_text
       ticket_id_update:
         - type: from_text
       new_status:

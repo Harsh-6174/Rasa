@@ -117,6 +117,7 @@ nlu:
       - outlook isn’t opening
       - cannot see my emails
       - wifi is slow
+      - laptop feels slow
       - printer is not working
       - having trouble with Microsoft Teams
       - chrome is running slow
@@ -136,15 +137,15 @@ nlu:
     examples: |
       - install [google chrome](software_name)
       - install [microsoft teams](software_name)
-      - want to install [vscode](software_name)
+      - i want to install [vscode](software_name)
       - want to install [visual studio code](software_name)
       - please install [pycharm](software_name)
       - install [postman](software_name)
       - install [vmware](software_name)
       - install [docker desktop](software_name)
       - need [github desktop](software_name)
-      - install [zoom](software_name)
-      - want to install [notepad++](software_name)
+      - install [zoom](software_name) in my system
+      - want to install [notepad++](software_name) in my laptop
       - want to install software in my system
       - install software for me
       - need new software
