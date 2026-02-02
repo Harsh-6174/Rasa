@@ -511,6 +511,8 @@ class ActionFetchLastTickets(Action):
                     description = ticket.get("description")
                     status = ticket.get("status")
                     dispatcher.utter_message(f"Ticket ID: {ticket_id}\nDescription: {description}\nStatus: {status}\n")
+        
+        dispatcher.utter_message("Is there anything else I can help you with?")
         return [SlotSet("user_email",None), SlotSet("num_tickets",None)]
 
 
