@@ -4,7 +4,8 @@ from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
 from rapidfuzz import process, fuzz
 from sklearn.metrics.pairwise import cosine_similarity
-from rasa_sdk import Action
+from rasa_sdk import Action, FormValidationAction
+from typing import Any, Dict, Text
 from rasa_sdk.events import SlotSet, FollowupAction, ActiveLoop, AllSlotsReset
 import re, requests
 from requests.auth import HTTPBasicAuth
@@ -101,9 +102,10 @@ def fetch_ticket_by_id(ticket_id):
         latest_incident = data["result"][0]
         incident_number = latest_incident["number"]
         incident_description = latest_incident.get("description", "No description available")
+        incident_short_description = latest_incident.get("short_description", "No short description available")
         incident_state_number = latest_incident.get("incident_state", "Unknown")
         incident_status = incident_state_mapping.get(incident_state_number, "Unknown")
-        return {"ticket_id": incident_number, "description": incident_description, "status": incident_status}
+        return {"ticket_id": incident_number, "short_description": incident_short_description, "description": incident_description, "status": incident_status}
     else:
         return {"error": f"Error fetching the ticket with Id {ticket_id}"}
 
@@ -137,9 +139,10 @@ def fetch_ticket_by_email(user_email):
                     latest_incident = incidents_data["result"][0]
                     incident_number = latest_incident["number"]
                     incident_description = latest_incident.get("description", "No description available")
+                    incident_short_description = latest_incident.get("short_description", "No short description available")
                     incident_state_number = latest_incident.get("incident_state", "Unknown")
                     incident_status = incident_state_mapping.get(incident_state_number, "Unknown")
-                    return {"ticket_id": incident_number, "description": incident_description, "status": incident_status}
+                    return {"ticket_id": incident_number, "short_description": incident_short_description, "description": incident_description, "status": incident_status}
                 else:
                     return {"error": f"No incidents found for the email {user_email}"}
             else:
@@ -244,9 +247,11 @@ class ActionFetchTicket(Action):
                 dispatcher.utter_message(f"Details of ticket {ticket_id}:\n")
                 dispatcher.utter_message(
                     f"Ticket Id - {result.get('ticket_id')}\n"
+                    f"Short Description - {result.get('short_description')}\n"
                     f"Description - {result.get('description')}\n"
                     f"Status - {result.get('status')}"
                 )
+                dispatcher.utter_message("Is there anything else I can help you with?")
 
         elif user_email:
             result = fetch_ticket_by_email(user_email)
@@ -257,11 +262,14 @@ class ActionFetchTicket(Action):
                     dispatcher.utter_message(f"Latest ticket associated with email {user_email}:\n")
                     dispatcher.utter_message(
                         f"Ticket Id - {result.get('ticket_id')}\n"
+                        f"Short Description - {result.get('short_description')}\n"
                         f"Description - {result.get('description')}\n"
                         f"Status - {result.get('status')}"
                     )
                 else:
                     dispatcher.utter_message(f"No tickets found for email {user_email}")
+                
+                dispatcher.utter_message("Is there anything else I can help you with?")
 
         else:
             dispatcher.utter_message(
@@ -277,6 +285,87 @@ class ActionFetchTicket(Action):
 
         return events
 
+def get_tickets_by_email(user_email):
+    url = (
+        f"https://{instance}.service-now.com/api/now/table/incident"
+        f"?sysparm_query=caller_id.email={user_email}"
+        f"&sysparm_fields=number,short_description"
+    )
+
+    response = requests.get(
+        url,
+        auth=HTTPBasicAuth(username, password),
+        headers=headers
+    )
+
+    if response.status_code != 200:
+        return []
+
+    return response.json().get("result", [])
+
+class ActionAskUpdateTicketFormTicketId(Action):
+
+    def name(self):
+        return "action_ask_update_ticket_form_ticket_id_update"
+
+    def run(self, dispatcher, tracker, domain):
+
+        user_email = tracker.get_slot("user_email")
+
+        tickets = get_tickets_by_email(user_email) if user_email else []
+
+        if not tickets:
+            dispatcher.utter_message(
+                "I couldn't find any tickets for your email. Please enter your ticket ID."
+            )
+            return []
+
+        buttons = [
+            {
+                "title": f"{t.get('number')} - {(t.get('short_description') or '')[:40]}",
+                "payload": t.get("number")
+            }
+            for t in tickets
+        ]
+
+        dispatcher.utter_message(
+            text="Please select the ticket you want to update:",
+            buttons=buttons
+        )
+
+        return []
+
+class ActionAskUpdateTicketStatusFormTicketId(Action):
+
+    def name(self):
+        return "action_ask_update_ticket_status_form_ticket_id_update"
+
+    def run(self, dispatcher, tracker, domain):
+
+        user_email = tracker.get_slot("user_email")
+
+        tickets = get_tickets_by_email(user_email) if user_email else []
+
+        if not tickets:
+            dispatcher.utter_message(
+                "I couldn't find any tickets for your email. Please enter your ticket ID."
+            )
+            return []
+
+        buttons = [
+            {
+                "title": f"{t.get('number')} - {(t.get('short_description') or '')[:40]}",
+                "payload": t.get("number")
+            }
+            for t in tickets
+        ]
+
+        dispatcher.utter_message(
+            text="Please select the ticket you want to update:",
+            buttons=buttons
+        )
+
+        return []
 
 def update_ticket_description(ticket_id, new_description):   
     sys_id = None
@@ -332,6 +421,7 @@ class ActionUpdateTicketDescription(Action):
 
         if "error" in result:
             dispatcher.utter_message(f"Failed to update the ticket : {result['error']}")
+            dispatcher.utter_message("Is there anything else I can help you with?")
             return [
                 SlotSet("user_email", None),
                 SlotSet("ticket_id_update", None),
@@ -340,6 +430,7 @@ class ActionUpdateTicketDescription(Action):
         else:
             ticket_id = result.get("ticket_id")
             dispatcher.utter_message(text=f"Ticket ID {ticket_id} has been updated with the new description")
+            dispatcher.utter_message("Is there anything else I can help you with?")
         
         return [
             SlotSet("ticket_id_update", None),
@@ -431,6 +522,7 @@ class ActionUpdateTicketStatus(Action):
 
         if "error" in result:
             dispatcher.utter_message(f"Failed to update the ticket status: {result['error']}")
+            dispatcher.utter_message("Is there anything else I can help you with?")
             return [
                 SlotSet("user_email", None),
                 SlotSet("ticket_id_update", None),
@@ -439,6 +531,7 @@ class ActionUpdateTicketStatus(Action):
         else:
             ticket_id = result.get("ticket_id")
             dispatcher.utter_message(text=f"Ticket ID {ticket_id} has been updated to {new_status}.")
+            dispatcher.utter_message("Is there anything else I can help you with?")
         
         return [
             SlotSet("ticket_id_update", None),

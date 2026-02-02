@@ -264,3 +264,5 @@ actions:
   - action_run_selected_troubleshooter
   - action_list_printers_by_location
   - action_trigger_printer_installation
+  - action_ask_update_ticket_form_ticket_id_update
+  - action_ask_update_ticket_status_form_ticket_id_update

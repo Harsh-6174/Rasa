@@ -355,256 +355,257 @@ version: "2.0"
 
 
 nlu:
-- intent: create_incident
-  examples: |
-    - create a support ticket
-    - raise a ticket
-    - raise an incident
-    - create a support request
-    - open a new support ticket
-    - open a new support incident
-    - raise an issue
-    - create new ticket
-    - create new incident
-    - create a new request
-    - submit a support ticket
-    - open a ticket for me
-    - create a ticket for my problem
+  - intent: create_incident
+    examples: |
+      - create a support ticket
+      - raise a ticket
+      - raise an incident
+      - create a support request
+      - open a new support ticket
+      - open a new support incident
+      - raise an issue
+      - create new ticket
+      - create new incident
+      - create a new request
+      - submit a support ticket
+      - open a ticket for me
+      - create a ticket for my problem
 
-- intent: update_incident
-  examples: |
-    - update my ticket
-    - update my incident
-    - change my ticket details
-    - change my incident details
-    - update my ticket description
-    - update my incident description
-    - modify details of my ticket
-    - update the details on my ticket
-    - edit my ticket
-    - edit my incident
+  - intent: update_incident
+    examples: |
+      - update my ticket
+      - update my incident
+      - change my ticket details
+      - change my incident details
+      - update my ticket description
+      - update my incident description
+      - modify details of my ticket
+      - update the details on my ticket
+      - edit my ticket
+      - edit my incident
 
-- intent: update_incident_status
-  examples: |
-    - update my ticket status
-    - update the status of my incident
-    - change the status of my ticket
-    - change the status of my incident
-    - change my ticket status
-    - change my incident status
-    - update status of my support ticket
-    - update status of my support incident
-    - close my ticket
-    - reopen my ticket
-    - mark my incident as resolved
+  - intent: update_incident_status
+    examples: |
+      - update my ticket status
+      - update the status of my incident
+      - change the status of my ticket
+      - change the status of my incident
+      - change my ticket status
+      - change my incident status
+      - update status of my support ticket
+      - update status of my support incident
+      - close my ticket
+      - reopen my ticket
+      - mark my incident as resolved
 
-- intent: fetch_incident
-  examples: |
-    - fetch my ticket
-    - show my ticket
-    - show my incident
-    - i need my ticket details
-    - i need my incident details
-    - retrieve my ticket
-    - show me information for my ticket
-    - show the details of my ticket
-    - fetch my ticket by id
-    - open my ticket
-    - get my ticket details
+  - intent: fetch_incident
+    examples: |
+      - fetch my ticket
+      - show my ticket
+      - show my incident
+      - i need my ticket details
+      - i need my incident details
+      - retrieve my ticket
+      - show me information for my ticket
+      - show the details of my ticket
+      - fetch my ticket by id
+      - open my ticket
+      - get my ticket details
 
-- intent: fetch_incidents
-  examples: |
-    - show me last [5](num_tickets) tickets
-    - show me last [10](num_tickets) tickets
-    - show me last [3](num_tickets) tickets
-    - fetch my last [7](num_tickets) tickets
-    - show my last [6](num_tickets) tickets
-    - show my most recent [9](num_tickets) tickets
-    - give me last [4](num_tickets) tickets
-    - i need the last [8](num_tickets) tickets
-    - show me last [5](num_tickets) [incident](ticket_type) tickets
-    - show me the last [10](num_tickets) [incident](ticket_type) tickets
-    - fetch my last [3](num_tickets) [incident](ticket_type) tickets
-    - pull up my last [6](num_tickets) [incident](ticket_type) tickets
-    - show tickets for email [admin@example.com](user_email)
+  - intent: fetch_incidents
+    examples: |
+      - show me last [5](num_tickets) tickets
+      - show me last [10](num_tickets) tickets
+      - show me last [3](num_tickets) tickets
+      - fetch my last [7](num_tickets) tickets
+      - show my last [6](num_tickets) tickets
+      - show my most recent [9](num_tickets) tickets
+      - give me last [4](num_tickets) tickets
+      - i need the last [8](num_tickets) tickets
+      - show me last [5](num_tickets) [incident](ticket_type) tickets
+      - show me the last [10](num_tickets) [incident](ticket_type) tickets
+      - fetch my last [3](num_tickets) [incident](ticket_type) tickets
+      - pull up my last [6](num_tickets) [incident](ticket_type) tickets
+      - show tickets for email [admin@example.com](user_email)
 
-- intent: ask_hr_queries
-  examples: |
-    - what are the hr policies
-    - tell me about hr policies
-    - tell me the employee benefits
-    - what is the leave policy
-    - how does the sick leave work
-    - what are the hr rules
-    - what is the policy for vacation days
-    - what is the dress code policy
-    - what are the company holidays
-    - how do i apply for leave
-    - how do i get medical benefits
-    - how can i request vacation days
-    - how is employee attendance tracked
-    - what is the working hours policy
-    - do we have maternity leave
-    - is there a bonus policy in the company
-    - how do i update my personal details in the hr system
-    - what is the performance evaluation process
-    - what are the guidelines for business attire
+  - intent: ask_hr_queries
+    examples: |
+      - what are the hr policies
+      - tell me about hr policies
+      - tell me the employee benefits
+      - what is the leave policy
+      - how does the sick leave work
+      - what are the hr rules
+      - what is the policy for vacation days
+      - what is the dress code policy
+      - what are the company holidays
+      - how do i apply for leave
+      - how do i get medical benefits
+      - how can i request vacation days
+      - how is employee attendance tracked
+      - what is the working hours policy
+      - do we have maternity leave
+      - is there a bonus policy in the company
+      - how do i update my personal details in the hr system
+      - what is the performance evaluation process
+      - what are the guidelines for business attire
 
-- intent: ask_workelevate_queries
-  examples: |
-    - what is workelevate
-    - tell me about workelevate
-    - how does workelevate work
-    - what is the purpose of workelevate
-    - how can workelevate help my business
-    - what services does workelevate provide
-    - what are the key features of workelevate
-    - is workelevate a tool for businesses or individuals
-    - does workelevate integrate with other tools
-    - does workelevate offer analytics and reporting features
+  - intent: ask_workelevate_queries
+    examples: |
+      - what is workelevate
+      - tell me about workelevate
+      - how does workelevate work
+      - what is the purpose of workelevate
+      - how can workelevate help my business
+      - what services does workelevate provide
+      - what are the key features of workelevate
+      - is workelevate a tool for businesses or individuals
+      - does workelevate integrate with other tools
+      - does workelevate offer analytics and reporting features
 
-- intent: report_issue
-  examples: |
-    - outlook isn’t opening
-    - cannot see my emails
-    - wifi is slow
-    - laptop feels slow
-    - printer is not working
-    - having trouble with microsoft teams
-    - chrome is running slow
-    - outlook keeps crashing
-    - internet speed is poor
-    - unable to connect to internet
-    - browser not loading pages
-    - facing problem in sending mail
-    - web pages take long to load
-    - gmail won’t sync
-    - outlook keeps asking for password
-    - teams call is dropping frequently
-    - need help with onedrive sync issue
-    - unable to connect to vpn
+  - intent: report_issue
+    examples: |
+      - outlook isn’t opening
+      - cannot see my emails
+      - wifi is slow
+      - laptop feels slow
+      - printer is not working
+      - having trouble with microsoft teams
+      - chrome is running slow
+      - outlook keeps crashing
+      - internet speed is poor
+      - unable to connect to internet
+      - browser not loading pages
+      - facing problem in sending mail
+      - web pages take long to load
+      - gmail won’t sync
+      - outlook keeps asking for password
+      - teams call is dropping frequently
+      - need help with onedrive sync issue
+      - unable to connect to vpn
 
-- intent: request_software
-  examples: |
-    - install [google chrome](software_name)
-    - install [microsoft teams](software_name)
-    - i want to install [vscode](software_name)
-    - want to install [visual studio code](software_name)
-    - please install [pycharm](software_name)
-    - please download [adobe](software_name) in my laptop
-    - install [postman](software_name)
-    - install [vmware](software_name)
-    - install [docker desktop](software_name)
-    - need [github desktop](software_name)
-    - install [zoom](software_name) in my system
-    - want to install [notepad++](software_name) in my laptop
-    - want to install software in my system
-    - install software for me
-    - need new software
-    - install application
+  - intent: request_software
+    examples: |
+      - install [google chrome](software_name)
+      - install [microsoft teams](software_name)
+      - i want to install [vscode](software_name)
+      - want to install [visual studio code](software_name)
+      - please install [pycharm](software_name)
+      - please download [adobe](software_name) in my laptop
+      - install [postman](software_name)
+      - install [vmware](software_name)
+      - install [docker desktop](software_name)
+      - need [github desktop](software_name)
+      - install [zoom](software_name) in my system
+      - want to install [notepad++](software_name) in my laptop
+      - want to install software in my system
+      - install software for me
+      - need new software
+      - install application
 
-- intent: request_printer
-  examples: |
-    - i want to configure a printer
-    - i want to setup a printer
-    - i need help with printer configuration
-    - can you configure a printer for me
-    - please setup a printer
-    - help me install a printer
-    - i want to install a printer on my system
-    - add a printer to my laptop
-    - add printer to my system
-    - printer installation required
-    - printer setup required
-    - need printer access
-    - need to connect to office printer
-    - connect printer to my system
-    - setup office printer
-    - configure office printer
-    - install office printer
-    - i am unable to add a printer
-    - how do i setup a printer
-    - how can i configure printer
-    - printer is not configured
-    - i need a printer configured for my system
-    - want to use office printer
-    - need printer configured for work
-    - please configure printer for me
+  - intent: request_printer
+    examples: |
+      - i want to configure a printer
+      - i want to setup a printer
+      - i need help with printer configuration
+      - can you configure a printer for me
+      - please setup a printer
+      - help me install a printer
+      - i want to install a printer on my system
+      - add a printer to my laptop
+      - add printer to my system
+      - printer installation required
+      - printer setup required
+      - need printer access
+      - need to connect to office printer
+      - connect printer to my system
+      - setup office printer
+      - configure office printer
+      - install office printer
+      - i am unable to add a printer
+      - how do i setup a printer
+      - how can i configure printer
+      - printer is not configured
+      - i need a printer configured for my system
+      - want to use office printer
+      - need printer configured for work
+      - please configure printer for me
 
-- intent: exit_chat
-  examples: |
-    - bye
-    - goodbye
-    - exit
-    - quit
-    - stop
-    - end
-    - end chat
-    - close chat
-    - that's all
-    - no thanks
-    - nothing else
-    - done
-    - finished
-    - i don't need anything else
-    - you can close this now
-    - we are done here
-    - i'm done
-    - i'm finished
-    - please end the chat
-    - i want to exit
-    - i want to quit
-    - stop the chat
-    - end this conversation
-    - close this conversation
-    - that's all for now
-    - i'm good, thanks
-    - nothing more, thanks
+  - intent: exit_chat
+    examples: |
+      - bye
+      - goodbye
+      - exit
+      - quit
+      - stop
+      - end
+      - end chat
+      - close chat
+      - that's all
+      - no thanks
+      - nothing else
+      - done
+      - finished
+      - i don't need anything else
+      - you can close this now
+      - we are done here
+      - i'm done
+      - i'm finished
+      - please end the chat
+      - i want to exit
+      - i want to quit
+      - stop the chat
+      - end this conversation
+      - close this conversation
+      - that's all for now
+      - that would be it
+      - i'm good, thanks
+      - nothing more, thanks
 
-- intent: greet
-  examples: |
-    - hi
-    - hello
-    - hey
-    - hey there
-    - hello there
-    - good morning
-    - good evening
-    - good afternoon
-    - hi there
-    - hello bot
-    - hey bot
-    - hi bot
-    - hello assistant
-    - hey assistant
+  - intent: greet
+    examples: |
+      - hi
+      - hello
+      - hey
+      - hey there
+      - hello there
+      - good morning
+      - good evening
+      - good afternoon
+      - hi there
+      - hello bot
+      - hey bot
+      - hi bot
+      - hello assistant
+      - hey assistant
 
-- intent: user_satisfaction_response
-  examples: |
-    - yes
-    - no
-    - yeah
-    - yup
-    - sure
-    - nope
-    - not really
-    - no thanks
-    - that helped
-    - it helped
-    - this helped
-    - it worked
-    - that worked
-    - looks good
-    - all good
-    - satisfied
-    - i'm satisfied
-    - resolved
-    - problem solved
-    - it didn't help
-    - that didn't help
-    - this didn't work
-    - it didn't work
-    - not helpful
-    - still not working
-    - not resolved
-    - i'm not satisfied
-    - this didn't solve my problem
+  - intent: user_satisfaction_response
+    examples: |
+      - yes
+      - no
+      - yeah
+      - yup
+      - sure
+      - nope
+      - not really
+      - no thanks
+      - that helped
+      - it helped
+      - this helped
+      - it worked
+      - that worked
+      - looks good
+      - all good
+      - satisfied
+      - i'm satisfied
+      - resolved
+      - problem solved
+      - it didn't help
+      - that didn't help
+      - this didn't work
+      - it didn't work
+      - not helpful
+      - still not working
+      - not resolved
+      - i'm not satisfied
+      - this didn't solve my problem
