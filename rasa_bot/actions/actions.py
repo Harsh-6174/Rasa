@@ -1,12 +1,9 @@
 import json, os
 from dotenv import load_dotenv
-from datetime import datetime
-from sklearn.feature_extraction.text import TfidfVectorizer
+from datetime import datetime, timedelta
 from rapidfuzz import process, fuzz
-from sklearn.metrics.pairwise import cosine_similarity
-from rasa_sdk import Action, FormValidationAction
-from typing import Any, Dict, Text
-from rasa_sdk.events import SlotSet, FollowupAction, ActiveLoop, AllSlotsReset
+from rasa_sdk import Action
+from rasa_sdk.events import SlotSet, FollowupAction, ActiveLoop, AllSlotsReset, ReminderScheduled
 import re, requests
 from requests.auth import HTTPBasicAuth
 
@@ -82,7 +79,6 @@ class ActionCreateTicket(Action):
         dispatcher.utter_message("Is there anything else I can help you with?")
         return [SlotSet("short_description", None), SlotSet("ticket_description", None), SlotSet("category", None)]
 
-
 def fetch_ticket_by_id(ticket_id):  
     incident_state_mapping = {
             "1": "New",
@@ -111,12 +107,12 @@ def fetch_ticket_by_id(ticket_id):
 
 def fetch_ticket_by_email(user_email):
     incident_state_mapping = {
-            "1": "New",
-            "2": "In Progress",
-            "3": "On Hold",
-            "6": "Resolved",
-            "7": "Closed"
-        }
+        "1": "New",
+        "2": "In Progress",
+        "3": "On Hold",
+        "6": "Resolved",
+        "7": "Closed"
+    }
 
     url = f"https://{instance}.service-now.com/api/now/table/sys_user?sysparm_query=email={user_email}"
     response = requests.get(url, auth=HTTPBasicAuth(username,password), headers=headers)
@@ -151,68 +147,6 @@ def fetch_ticket_by_email(user_email):
             return {"error": f"No user found with the email {user_email}"}
     else:
         return {"error": "Error fetching user data"}
-
-
-# class ActionFetchTicket(Action):
-#     def name(self):
-#         return "action_fetch_ticket"
-
-#     def run(self, dispatcher, tracker, domain):
-#         ticket_id_or_email = tracker.get_slot("ticket_id_or_email")
-#         ticket_id = tracker.get_slot("ticket_id")
-#         user_email = tracker.get_slot("user_email")
-
-#         incident_id_regex = r"\bINC\d{6,}\b"
-#         email_id_regex = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
-        
-#         incident_id_match = re.search(incident_id_regex, ticket_id_or_email)
-#         events = []
-#         if incident_id_match:
-#             ticket_id = incident_id_match.group(0)
-#             # tracker.slots["ticket_id"] = ticket_id
-#             events.append(SlotSet("ticket_id", ticket_id))
-
-#         email_match = re.search(email_id_regex, ticket_id_or_email)
-#         if email_match:
-#             user_email = email_match.group(0)
-#             # tracker.slots["user_email"] = user_email
-#             events.append(SlotSet("user_email", user_email))
-
-#         if ticket_id:
-#             result = fetch_ticket_by_id(ticket_id)
-#             if "error" in result:
-#                 dispatcher.utter_message(f"Failed to fetch the ticket: {result['error']}")
-#             else:
-#                 dispatcher.utter_message(f"Details of ticket {ticket_id} : \n")
-#                 ticket_id = result.get("ticket_id")
-#                 description = result.get("description")
-#                 status = result.get("status")
-#                 dispatcher.utter_message(f"Ticket Id - {ticket_id}\nDescription - {description}\nStatus - {status}")
-#                 return [SlotSet("ticket_type",None), SlotSet("ticket_id",None), SlotSet("user_email",None)]
-#             return [SlotSet("ticket_type",None), SlotSet("ticket_id",None), SlotSet("user_email",None)]
-#         elif user_email:
-#             result = fetch_ticket_by_email(user_email)
-#             if "error" in result:
-#                 dispatcher.utter_message(f"Failed to fetch the ticket : {result['error']}")
-#             else:
-#                 if result:
-#                     dispatcher.utter_message(f"Latest ticket associated with email {user_email} : \n")
-#                     ticket_id = result.get("ticket_id")
-#                     description = result.get("description")
-#                     status = result.get("status")
-#                     dispatcher.utter_message(f"Ticket Id - {ticket_id}\nDescription - {description}\nStatus - {status}")
-#                 else:
-#                     dispatcher.utter_message(f"No tickets found for email {user_email}")
-#         else:
-#             dispatcher.utter_message("Please provide either a ticket ID or an email Id to fetch the tickets.")
-        
-#         events.extend([
-#                     SlotSet("ticket_id_or_email", None),
-#                     SlotSet("ticket_id", None),
-#                     SlotSet("user_email", None),
-#                 ])
-
-#         return events        
 
 class ActionFetchTicket(Action):
     def name(self):
@@ -288,8 +222,8 @@ class ActionFetchTicket(Action):
 def get_tickets_by_email(user_email):
     url = (
         f"https://{instance}.service-now.com/api/now/table/incident"
-        f"?sysparm_query=caller_id.email={user_email}"
-        f"&sysparm_fields=number,short_description"
+        f"?sysparm_query=caller_id.email={user_email}^incident_stateNOT IN6,7^ORDERBYDESCsys_created_on"
+        f"&sysparm_fields=number,short_description,incident_state"
     )
 
     response = requests.get(
@@ -304,14 +238,11 @@ def get_tickets_by_email(user_email):
     return response.json().get("result", [])
 
 class ActionAskUpdateTicketFormTicketId(Action):
-
     def name(self):
         return "action_ask_update_ticket_form_ticket_id_update"
 
     def run(self, dispatcher, tracker, domain):
-
         user_email = tracker.get_slot("user_email")
-
         tickets = get_tickets_by_email(user_email) if user_email else []
 
         if not tickets:
@@ -320,9 +251,17 @@ class ActionAskUpdateTicketFormTicketId(Action):
             )
             return []
 
+        incident_state_mapping = {
+            "1": "New",
+            "2": "In Progress",
+            "3": "On Hold",
+            "6": "Resolved",
+            "7": "Closed"
+        }
+
         buttons = [
             {
-                "title": f"{t.get('number')} - {(t.get('short_description') or '')[:40]}",
+                "title": f"{t.get('number')} | {(t.get('short_description') or '')[:40]} | {incident_state_mapping.get(str(t.get('incident_state')), 'Unknown')}",
                 "payload": t.get("number")
             }
             for t in tickets
@@ -336,7 +275,6 @@ class ActionAskUpdateTicketFormTicketId(Action):
         return []
 
 class ActionAskUpdateTicketStatusFormTicketId(Action):
-
     def name(self):
         return "action_ask_update_ticket_status_form_ticket_id_update"
 
@@ -352,9 +290,17 @@ class ActionAskUpdateTicketStatusFormTicketId(Action):
             )
             return []
 
+        incident_state_mapping = {
+            "1": "New",
+            "2": "In Progress",
+            "3": "On Hold",
+            "6": "Resolved",
+            "7": "Closed"
+        }
+        
         buttons = [
             {
-                "title": f"{t.get('number')} - {(t.get('short_description') or '')[:40]}",
+                "title": f"{t.get('number')} | {(t.get('short_description') or '')[:40]} | {incident_state_mapping.get(str(t.get('incident_state')), 'Unknown')}",
                 "payload": t.get("number")
             }
             for t in tickets
@@ -558,7 +504,12 @@ def fetch_user_tickets(user_email, num_tickets = 5):
             "4": "Closed"
         }
 
-    incidents_url = f"https://{instance}.service-now.com/api/now/table/incident?sysparm_query=caller_id={sys_id}&sysparm_orderby=sys_created_onDESC&sysparm_limit={num_tickets}"
+    incidents_url = (
+        f"https://{instance}.service-now.com/api/now/table/incident"
+        f"?sysparm_query=caller_id={sys_id}^ORDERBYDESCsys_created_on"
+        f"&sysparm_limit={num_tickets}"
+    )
+
     incidents_response = requests.get(incidents_url, auth=HTTPBasicAuth(username, password), headers=headers)
 
     if incidents_response.status_code == 200:
@@ -590,7 +541,7 @@ class ActionFetchLastTickets(Action):
         user_email = tracker.get_slot("user_email")
         num_tickets = tracker.get_slot("num_tickets") or 5
         
-        result = fetch_user_tickets(user_email)
+        result = fetch_user_tickets(user_email, int(num_tickets))
 
         if "error" in result:
             dispatcher.utter_message(f"Failed to fetch tickets: {result['error']}")
@@ -607,7 +558,6 @@ class ActionFetchLastTickets(Action):
         
         dispatcher.utter_message("Is there anything else I can help you with?")
         return [SlotSet("user_email",None), SlotSet("num_tickets",None)]
-
 
 class ActionGetHRResponse(Action):
     def name(self):
@@ -704,7 +654,6 @@ class ActionHandleUserSatisfaction(Action):
         )
         return [FollowupAction("action_listen")]
 
-
 class ActionGetWorkElevateResponse(Action):
     def name(self):
         return "action_get_workelevate_response"
@@ -760,60 +709,6 @@ class ActionFallback(Action):
     def run(self, dispatcher, tracker, domain):
         dispatcher.utter_message("Sorry, I don't understand that. Can you please rephrase or ask something related to HR policies, WorkElevate or any issue you are facing?")
         return []
-
-
-# Working
-# class ActionFindTroubleshooter(Action):
-#     def name(self):
-#         return "action_find_troubleshooter"
-
-#     def run(self, dispatcher, tracker, domain):
-#         user_query = tracker.latest_message.get("text", "").strip()
-
-#         if not user_query:
-#             dispatcher.utter_message("Please describe your issue.")
-#             return [FollowupAction("action_listen")]
-
-#         try:
-#             response = requests.post(
-#                 "http://localhost:8000/match",
-#                 json={"query": user_query},
-#                 timeout=3
-#             )
-#             response.raise_for_status()
-#             data = response.json()
-#         except Exception as e:
-#             dispatcher.utter_message(
-#                 f"I'm having trouble analyzing your issue right now. ---- {e}"
-#             )
-#             return [FollowupAction("action_listen")]
-
-#         matches = data.get("matches", [])
-
-#         if not matches:
-#             dispatcher.utter_message(
-#                 "I couldn't find a matching troubleshooter. "
-#                 "Would you like me to create a ticket?"
-#             )
-#             return [
-#                 SlotSet("troubleshooter_query_completed", True),
-#                 SlotSet("awaiting_satisfaction_feedback", "ts_not_found"),
-#                 FollowupAction("action_listen")
-#             ]
-
-#         response_lines = ["I found these relevant troubleshooters:"]
-#         for match in matches:
-#             response_lines.append(f"- {match['name']}")
-    
-#         dispatcher.utter_message("\n".join(response_lines))
-#         dispatcher.utter_message("Did this solution work for you?")
-
-#         return [
-#             SlotSet("troubleshooter_query_completed", True),
-#             SlotSet("user_query", user_query),
-#             SlotSet("awaiting_satisfaction_feedback", "ts_list"),
-#             FollowupAction("action_listen")
-#         ]
 
 class ActionFindTroubleshooter(Action):
     def name(self):
@@ -1073,6 +968,9 @@ class ActionHandleSoftwareRequest(Action):
                 dispatcher.utter_message(
                     f"{software_name.title()} is not allowed on company devices."
                 )
+                dispatcher.utter_message(
+                    "Is there anything else I can help you with?"
+                )
                 return events + [
                     SlotSet("software_name", None),
                     SlotSet("confirmed_software_name", None),
@@ -1102,6 +1000,10 @@ class ActionHandleSoftwareRequest(Action):
 
             dispatcher.utter_message(
                 f"{software_name.title()} installation has been triggered successfully."
+            )
+
+            dispatcher.utter_message(
+                "Is there anything else I can help you with?"
             )
 
             return events + [
@@ -1172,6 +1074,9 @@ class ActionHandleSoftwareRequest(Action):
             dispatcher.utter_message(
                 f"{software_name.title()} is not allowed on company devices."
             )
+            dispatcher.utter_message(
+                "Is there anything else I can help you with?"
+            )
             return events + [
                 SlotSet("confirmed_software_name", None),
                 ActiveLoop(None),
@@ -1202,7 +1107,12 @@ class ActionHandleSoftwareRequest(Action):
             f"{software_name.title()} installation has been triggered successfully."
         )
 
+        dispatcher.utter_message(
+            "Is there anything else I can help you with?"
+        )
+
         return events + [
+            SlotSet("software_name", None),
             SlotSet("confirmed_software_name", None),
             ActiveLoop(None),
             FollowupAction("action_listen")
@@ -1295,13 +1205,6 @@ class ActionEndChat(Action):
             AllSlotsReset(),
             FollowupAction("action_listen")
         ]
-
-
-
-
-
-
-
 
 
 # Ask if anything else to do

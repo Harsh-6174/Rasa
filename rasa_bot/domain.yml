@@ -220,13 +220,13 @@ forms:
   fetch_last_tickets:
     required_slots:
       user_email:
-        - type: from_text
         - type: from_entity
           entity: user_email
-      num_tickets:
         - type: from_text
+      num_tickets:
         - type: from_entity
           entity: num_tickets
+        - type: from_text
 
   software_request_form:
     required_slots:
