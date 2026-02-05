@@ -82,7 +82,7 @@ rules:
   - rule: Handle user satisfaction after WE query
     condition:
       - slot_was_set:
-        - we_query_completed: true
+          - we_query_completed: true
     steps:
       - intent: user_satisfaction_response
       - action: action_handle_user_satisfaction
@@ -161,6 +161,11 @@ rules:
   - rule: End chat
     steps:
       - intent: exit_chat
+      - action: action_end_chat
+
+  - rule: Inactivity timeout 
+    steps: 
+      - intent: EXTERNAL_inactivity_timeout 
       - action: action_end_chat
 
   - rule: Greet user

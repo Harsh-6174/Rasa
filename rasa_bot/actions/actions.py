@@ -279,9 +279,7 @@ class ActionAskUpdateTicketStatusFormTicketId(Action):
         return "action_ask_update_ticket_status_form_ticket_id_update"
 
     def run(self, dispatcher, tracker, domain):
-
         user_email = tracker.get_slot("user_email")
-
         tickets = get_tickets_by_email(user_email) if user_email else []
 
         if not tickets:
@@ -384,6 +382,16 @@ class ActionUpdateTicketDescription(Action):
         ]
 
 def update_ticket_status(ticket_id, new_status):
+    if not new_status:
+        return {"error": "Missing status."}
+
+    new_status = new_status.lower().strip()
+
+    if new_status in ["resolve", "resolved"]:
+        new_status = "resolved"
+    elif new_status in ["close", "closed"]:
+        new_status = "closed"
+
     sys_id = None
     url_sys_id = f"https://{instance}.service-now.com/api/now/table/incident?sysparm_query=number={ticket_id}"
     response_sys_id = requests.get(
@@ -545,9 +553,11 @@ class ActionFetchLastTickets(Action):
 
         if "error" in result:
             dispatcher.utter_message(f"Failed to fetch tickets: {result['error']}")
+            return [SlotSet("user_email",None), SlotSet("num_tickets",None)]
         else:
             if not result:
                 dispatcher.utter_message(f"No tickets found for the user with Email ID {user_email}")
+                return [SlotSet("user_email",None), SlotSet("num_tickets",None)]
             else:
                 dispatcher.utter_message(f"Here are your last {len(result)} tickets: \n")
                 for ticket in result:
@@ -557,7 +567,7 @@ class ActionFetchLastTickets(Action):
                     dispatcher.utter_message(f"Ticket ID: {ticket_id}\nDescription: {description}\nStatus: {status}\n")
         
         dispatcher.utter_message("Is there anything else I can help you with?")
-        return [SlotSet("user_email",None), SlotSet("num_tickets",None)]
+        return [SlotSet("num_tickets",None)]
 
 class ActionGetHRResponse(Action):
     def name(self):
@@ -612,11 +622,26 @@ class ActionHandleUserSatisfaction(Action):
         return "action_handle_user_satisfaction"
 
     def run(self, dispatcher, tracker, domain):
-
-        user_satisfaction = tracker.latest_message.get("text", "").lower().strip()
+        text = tracker.latest_message.get("text", "").lower().strip()
         user_query = tracker.get_slot("user_query") or "HR / WorkElevate query"
 
-        if user_satisfaction == "yes":
+        positive_phrases = [
+            "yes", "yeah", "yup", "sure", "that helped", "it helped", "this helped",
+            "yes it worked", "that worked", "looks good", "all good", "satisfied",
+            "i'm satisfied", "resolved", "problem solved"
+        ]
+
+        negative_phrases = [
+            "no", "nope", "not really", "no thanks", "it didn't help",
+            "that didn't help", "it didn't", "this didn't work", "it didn't work",
+            "not helpful", "still not working", "not resolved",
+            "i'm not satisfied", "no it did not", "this didn't solve my problem"
+        ]
+
+        is_positive = any(p in text for p in positive_phrases)
+        is_negative = any(n in text for n in negative_phrases)
+
+        if is_positive and not is_negative:
             dispatcher.utter_message(
                 "Great! I'm glad I could help. Let me know if you need anything else."
             )
@@ -628,7 +653,7 @@ class ActionHandleUserSatisfaction(Action):
                 FollowupAction("action_listen")
             ]
 
-        if user_satisfaction == "no":
+        if is_negative:
             dispatcher.utter_message(
                 "Sorry to hear that! I'll raise a ticket for you right away."
             )
@@ -699,7 +724,13 @@ class ActionGetWorkElevateResponse(Action):
         return [
             SlotSet("we_query_completed",True),
             SlotSet("awaiting_satisfaction_feedback", "we"), 
-            SlotSet("user_query", user_query)
+            SlotSet("user_query", user_query),
+            ReminderScheduled(
+                intent_name="EXTERNAL_inactivity_timeout",
+                trigger_date_time=datetime.now() + timedelta(seconds=30),
+                name="inactivity_timeout",
+                kill_on_user_message=True
+            )
         ]
 
 class ActionFallback(Action):
@@ -851,12 +882,27 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
         return "action_handle_user_satisfaction_troubleshooter"
 
     def run(self, dispatcher, tracker, domain):
-
-        user_text = tracker.latest_message.get("text", "").lower().strip()
+        text = tracker.latest_message.get("text", "").lower().strip()
         stage = tracker.get_slot("awaiting_satisfaction_feedback")
         user_query = tracker.get_slot("user_query") or "Technical issue"
 
-        if user_text not in ["yes", "no"]:
+        positive_phrases = [
+            "yes", "yeah", "yup", "sure", "that helped", "it helped", "this helped",
+            "yes it worked", "that worked", "looks good", "all good", "satisfied",
+            "i'm satisfied", "resolved", "problem solved"
+        ]
+
+        negative_phrases = [
+            "no", "nope", "not really", "no thanks", "it didn't help",
+            "that didn't help", "it didn't", "this didn't work", "it didn't work",
+            "not helpful", "still not working", "not resolved",
+            "i'm not satisfied", "no it did not", "this didn't solve my problem"
+        ]
+
+        is_positive = any(p in text for p in positive_phrases)
+        is_negative = any(n in text for n in negative_phrases)
+
+        if not is_positive and not is_negative:
             dispatcher.utter_message("Please reply with yes or no.")
             return [FollowupAction("action_listen")]
 
@@ -864,8 +910,7 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
             return [FollowupAction("action_run_selected_troubleshooter")]
 
         if stage == "ts_not_found":
-
-            if user_text == "yes":
+            if is_positive and not is_negative:
                 dispatcher.utter_message("I'll raise a ticket for you.")
 
                 return [
@@ -885,7 +930,7 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
                     FollowupAction("create_ticket_form")
                 ]
 
-            if user_text == "no":
+            if is_negative:
                 dispatcher.utter_message("Alright. Let me know if you need anything else.")
                 return [
                     SlotSet("awaiting_satisfaction_feedback", None),
@@ -895,8 +940,7 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
                 ]
 
         if stage == "ts_list":
-
-            if user_text == "yes":
+            if is_positive and not is_negative:
                 dispatcher.utter_message("Great! Let me know if you need anything else.")
                 return [
                     SlotSet("awaiting_satisfaction_feedback", None),
@@ -905,15 +949,14 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
                     FollowupAction("action_listen")
                 ]
 
-            if user_text == "no":
+            if is_negative:
                 return [
                     SlotSet("awaiting_satisfaction_feedback", None),
                     FollowupAction("action_get_troubleshooter_sop")
                 ]
 
         if stage == "ts_sop":
-
-            if user_text == "yes":
+            if is_positive and not is_negative:
                 dispatcher.utter_message("Glad that helped! Let me know if you need anything else.")
                 return [
                     SlotSet("awaiting_satisfaction_feedback", None),
@@ -922,7 +965,7 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
                     FollowupAction("action_listen")
                 ]
 
-            if user_text == "no":
+            if is_negative:
                 dispatcher.utter_message("I’ll raise a ticket for you.")
 
                 return [
@@ -1145,13 +1188,18 @@ class ActionListPrintersByLocation(Action):
         with open("printers.json", "r", encoding="utf-8") as f:
             printers_data = json.load(f)
 
-        printers = printers_data.get(location.lower())
+        location_key = location.strip().lower()
+        printers = printers_data.get(location_key)
 
         if not printers:
             dispatcher.utter_message(
-                f"No printers found for {location.title()}."
+                "Sorry, I currently support only these locations:\n"
+                "Bangalore, Mumbai, Noida.\n\n"
+                "Please select one from the options."
             )
-            return []
+            return [
+                SlotSet("printer_location", None)
+            ]
 
         buttons = [
             {
@@ -1198,6 +1246,7 @@ class ActionEndChat(Action):
         return "action_end_chat"
 
     def run(self, dispatcher, tracker, domain):
+        print("Session Ended")
         dispatcher.utter_message("Thanks for chatting! Have a great day. 👋")
 
         return [

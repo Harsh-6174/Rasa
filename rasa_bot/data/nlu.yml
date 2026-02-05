@@ -4,6 +4,9 @@ nlu:
   - regex: user_email
     examples: |
       - [a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}
+  - regex: ticket_id
+    examples: |
+      - INC\d{6,}
   
   - intent: create_incident
     examples: |
@@ -20,6 +23,12 @@ nlu:
       - submit a support ticket
       - open a ticket for me
       - create a ticket for my problem
+      - i want to raise a ticket, my id is [admin@example.com](user_email)
+      - raise a ticket for [admin@example.com](user_email)
+      - create a support ticket for [admin@example.com](user_email)
+      - open a new ticket, email is [admin@example.com](user_email)
+      - raise an incident with email [admin@example.com](user_email)
+      - create a ticket using [admin@example.com](user_email)
 
   - intent: update_incident
     examples: |
@@ -44,9 +53,18 @@ nlu:
       - change my incident status
       - update status of my support ticket
       - update status of my support incident
-      - close my ticket
-      - reopen my ticket
-      - mark my incident as resolved
+      - mark my incident as [resolved](new_status)
+      - mark my incident as [resolve](new_status)
+      - mark my ticket as [resolved](new_status)
+      - mark my ticket as [resolve](new_status)
+      - mark my incident as [closed](new_status)
+      - mark my incident as [close](new_status)
+      - mark my ticket as [closed](new_status)
+      - mark my ticket as [close](new_status)
+      - [resolve](new_status) my ticket
+      - [resolved](new_status) my ticket
+      - [close](new_status) my ticket
+      - [closed](new_status) my ticket
 
   - intent: fetch_incident
     examples: |
@@ -61,6 +79,10 @@ nlu:
       - fetch my ticket by id
       - open my ticket
       - get my ticket details
+      - fetch my ticket [INC0012345](ticket_id)
+      - show my ticket [INC0098765](ticket_id)
+      - show my incident for [admin@example.com](user_email)
+      - fetch ticket for [admin@example.com](user_email)
 
   - intent: fetch_incidents
     examples: |
@@ -113,26 +135,113 @@ nlu:
       - does workelevate integrate with other tools
       - does workelevate offer analytics and reporting features
 
+  # - intent: report_issue
+  #   examples: |
+  #     - outlook isn’t opening
+  #     - cannot see my emails
+  #     - laptop keeps shutting down randomly
+  #     - wifi is slow
+  #     - laptop feels slow
+  #     - printer is not working
+  #     - having trouble with microsoft teams
+  #     - chrome is running slow
+  #     - outlook keeps crashing
+  #     - internet speed is poor
+  #     - unable to connect to internet
+  #     - browser not loading pages
+  #     - facing problem in sending mail
+  #     - web pages take long to load
+  #     - gmail won’t sync
+  #     - outlook keeps asking for password
+  #     - teams call is dropping frequently
+  #     - need help with onedrive sync issue
+  #     - unable to connect to vpn
+
   - intent: report_issue
     examples: |
       - outlook isn’t opening
+      - outlook is not launching on my system
+      - outlook keeps crashing when I open it
+      - outlook keeps asking for my password
+
       - cannot see my emails
+      - my mailbox is not loading
+      - emails are not syncing in outlook
+      - I am not receiving new emails
+
+      - laptop keeps shutting down randomly
+      - my laptop suddenly restarts on its own
+      - system is shutting down without warning
+      - my machine is crashing frequently
+
       - wifi is slow
+      - office wifi is very slow today
+      - internet is extremely slow on my laptop
+      - network speed is poor
+
       - laptop feels slow
+      - my system performance is very slow
+      - computer is taking a long time to respond
+      - applications are very slow to open
+
       - printer is not working
+      - unable to print from my system
+      - printer is offline in my laptop
+      - printing is failing from my computer
+
       - having trouble with microsoft teams
+      - microsoft teams is not opening
+      - teams is not connecting to meetings
+      - teams keeps crashing during calls
+
+      - teams call is dropping frequently
+      - my teams calls keep disconnecting
+      - audio and video keep dropping in teams meeting
+
       - chrome is running slow
-      - outlook keeps crashing
+      - browser is running very slow
+      - chrome keeps freezing
+      - browser keeps hanging
+
       - internet speed is poor
       - unable to connect to internet
+      - internet connection is unstable
+      - network keeps disconnecting
+
       - browser not loading pages
+      - web pages are not opening
+      - websites are taking too long to load
+      - pages are stuck on loading
+
       - facing problem in sending mail
-      - web pages take long to load
+      - I am unable to send emails
+      - outgoing mails are failing
+      - email is stuck in outbox
+
       - gmail won’t sync
-      - outlook keeps asking for password
-      - teams call is dropping frequently
+      - gmail is not syncing on my laptop
+      - gmail is not updating emails
+
       - need help with onedrive sync issue
+      - onedrive is not syncing my files
+      - files are not uploading to onedrive
+      - onedrive shows sync error
+
+      - having trouble with vpn
       - unable to connect to vpn
+      - vpn is not connecting from home
+      - vpn connection fails every time
+
+      - outlook keeps crashing when I try to open any mail
+      - teams meeting audio is not working properly
+      - my system is very slow after the latest update
+      - I cannot access internal websites from my laptop
+      - my internet works but company sites are not opening
+      - I am facing network issues while working from home
+      - I need help, my laptop is not functioning properly
+      - something is wrong with my system, it is very slow and keeps hanging
+      - I am unable to work because most applications are not opening
+
 
   - intent: request_software
     examples: |
