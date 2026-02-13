@@ -21,6 +21,7 @@ intents:
   - EXTERNAL_inactivity_timeout
   - exit_chat
   - select_troubleshooter
+  - session_timeout
 
 entities:
   - ticket_type
@@ -84,6 +85,10 @@ slots:
     type: text
   selected_troubleshooter:
     type: text
+  selected_troubleshooter_id:
+    type: text
+  selected_troubleshooter_ps_id:
+    type: any
   confirmed_software_name:
     type: text
 
@@ -178,21 +183,30 @@ responses:
         payload: '/inform{{"printer_location":"mumbai"}}'
       - title: "Noida"
         payload: '/inform{{"printer_location":"noida"}}'
+  
+  utter_session_timeout:
+  - text: "Looks like you were inactive. I’m closing this chat now."
 
 forms:
   create_ticket_form:
-    user_email:
-      - type: from_entity
-        entity: user_email
-      - type: from_text
-    short_description:
-      - type: from_text
-    ticket_description:
-      - type: from_text
-    category:
-      - type: from_text
+    ignored_intents:
+      - session_timeout
+    required_slots:
+      user_email:
+        - type: from_entity
+          entity: user_email
+        - type: from_text
+      short_description:
+        - type: from_text
+      ticket_description:
+        - type: from_text
+      category:
+        - type: from_text
+
 
   fetch_ticket_form:
+    ignored_intents:
+      - session_timeout
     required_slots:
       ticket_id_or_email:
         - type: from_entity
@@ -202,6 +216,8 @@ forms:
         - type: from_text
 
   update_ticket_form:
+    ignored_intents:
+      - session_timeout
     required_slots:
       user_email:
         - type: from_text
@@ -211,6 +227,8 @@ forms:
         - type: from_text
 
   update_ticket_status_form:
+    ignored_intents:
+      - session_timeout
     required_slots:
       user_email:
         - type: from_text
@@ -225,6 +243,8 @@ forms:
             - requested_slot: new_status
 
   fetch_last_tickets:
+    ignored_intents:
+      - session_timeout
     required_slots:
       user_email:
         - type: from_entity
@@ -236,7 +256,13 @@ forms:
         - type: from_text
 
   software_request_form:
+    ignored_intents:
+      - session_timeout
     required_slots:
+      user_email:
+        - type: from_entity
+          entity: user_email
+        - type: from_text
       software_name:
         - type: from_entity
           entity: software_name
@@ -246,6 +272,8 @@ forms:
             - requested_slot: software_name
 
   printer_email_form:
+    ignored_intents:
+      - session_timeout
     required_slots:
       user_email:
         - type: from_entity
@@ -273,3 +301,5 @@ actions:
   - action_trigger_printer_installation
   - action_ask_update_ticket_form_ticket_id_update
   - action_ask_update_ticket_status_form_ticket_id_update
+  - action_session_timeout
+  - action_handle_user_satisfaction_provisioning

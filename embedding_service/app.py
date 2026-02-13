@@ -46,7 +46,7 @@ app = FastAPI()
 
 
 COLLECTION = "troubleshooters"
-SIM_THRESHOLD = 0.25
+SIM_THRESHOLD = 0.45
 TOP_K = 3
 EF_SEARCH = 64
 
@@ -77,8 +77,10 @@ def match(payload: dict):
             if r.score < SIM_THRESHOLD:
                 continue
 
+            print(r.payload)
             matches.append({
                 "troubleshooter_id" : r.payload.get("troubleshooter_id"),
+                "ps_command_id": r.payload.get("ps_command_id"),
                 "name" : r.payload.get("name"),
                 "score" : r.score
             })

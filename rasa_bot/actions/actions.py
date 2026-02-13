@@ -76,7 +76,7 @@ class ActionCreateTicket(Action):
             ticket_id = result.get("number", result.get("request_number"))
             dispatcher.utter_message(f"Your ticket has been created with ticket Id - {ticket_id}")
 
-        dispatcher.utter_message("Is there anything else I can help you with?")
+        dispatcher.utter_message("Let me know if you need anything else.")
         return [SlotSet("short_description", None), SlotSet("ticket_description", None), SlotSet("category", None)]
 
 def fetch_ticket_by_id(ticket_id):  
@@ -185,7 +185,7 @@ class ActionFetchTicket(Action):
                     f"Description - {result.get('description')}\n"
                     f"Status - {result.get('status')}"
                 )
-                dispatcher.utter_message("Is there anything else I can help you with?")
+                dispatcher.utter_message("Let me know if you need anything else.")
 
         elif user_email:
             result = fetch_ticket_by_email(user_email)
@@ -203,8 +203,7 @@ class ActionFetchTicket(Action):
                 else:
                     dispatcher.utter_message(f"No tickets found for email {user_email}")
                 
-                dispatcher.utter_message("Is there anything else I can help you with?")
-
+                dispatcher.utter_message("Let me know if you need anything else.")
         else:
             dispatcher.utter_message(
                 "Please provide either a ticket ID or an email ID to fetch the tickets."
@@ -365,7 +364,7 @@ class ActionUpdateTicketDescription(Action):
 
         if "error" in result:
             dispatcher.utter_message(f"Failed to update the ticket : {result['error']}")
-            dispatcher.utter_message("Is there anything else I can help you with?")
+            dispatcher.utter_message("Let me know if you need anything else.")
             return [
                 SlotSet("user_email", None),
                 SlotSet("ticket_id_update", None),
@@ -529,7 +528,7 @@ def fetch_user_tickets(user_email, num_tickets = 5):
                 incident_description = incident.get("description", "No description available")
                 incident_state_number = incident.get("incident_state", "Unknown")
                 incident_status = incident_state_mapping.get(incident_state_number, "Unknown")
-                
+
                 tickets.append({
                     "ticket_id": incident_number,
                     "description": incident_description,
@@ -724,13 +723,7 @@ class ActionGetWorkElevateResponse(Action):
         return [
             SlotSet("we_query_completed",True),
             SlotSet("awaiting_satisfaction_feedback", "we"), 
-            SlotSet("user_query", user_query),
-            ReminderScheduled(
-                intent_name="EXTERNAL_inactivity_timeout",
-                trigger_date_time=datetime.now() + timedelta(seconds=30),
-                name="inactivity_timeout",
-                kill_on_user_message=True
-            )
+            SlotSet("user_query", user_query)
         ]
 
 class ActionFallback(Action):
@@ -740,6 +733,37 @@ class ActionFallback(Action):
     def run(self, dispatcher, tracker, domain):
         dispatcher.utter_message("Sorry, I don't understand that. Can you please rephrase or ask something related to HR policies, WorkElevate or any issue you are facing?")
         return []
+
+def schedule_agent_job(user_identity, item_id, action_code, custom_job_name=None):
+    url = "https://dev.workelevate.com/api/Chatbot/JobScheduler"
+
+    payload = {
+        "user_identity": user_identity,
+        "item_id": str(item_id),
+        "action_code": action_code,
+        "retry_count": 0,
+        "custom_job_name": custom_job_name or ""
+    }
+
+    headers = {
+        "accept": "text/plain",
+        "Authorization": f"Bearer {os.getenv('JOB_SCHEDULER_SYNC_DATA_BEARER_TOKEN')}",
+        "Content-Type": "application/json-patch+json"
+    }
+
+    response = requests.post(
+        url,
+        data=json.dumps(payload),
+        headers=headers,
+        timeout=10
+    )
+
+    response.raise_for_status()
+
+    try:
+        return response.json()
+    except Exception:
+        return response.text
 
 class ActionFindTroubleshooter(Action):
     def name(self):
@@ -769,22 +793,28 @@ class ActionFindTroubleshooter(Action):
         matches = data.get("matches", [])
 
         if not matches:
-            dispatcher.utter_message(
-                "I couldn't find a matching troubleshooter. "
-                "Would you like me to create a ticket?"
-            )
+            dispatcher.utter_message("I couldn't find a matching troubleshooter. Let me try a detailed solution.")
+
             return [
+                SlotSet("user_query", user_query),
                 SlotSet("troubleshooter_query_completed", True),
-                SlotSet("awaiting_satisfaction_feedback", "ts_not_found"),
-                FollowupAction("action_listen")
+                SlotSet("awaiting_satisfaction_feedback", None),
+                FollowupAction("action_get_troubleshooter_sop")
             ]
 
         buttons = []
         for match in matches:
             name = match["name"]
+            ps_id = match.get("ps_command_id")
+
+            payload_dict = {
+                "selected_troubleshooter": name,
+                "selected_troubleshooter_ps_id": match.get("ps_command_id"),
+                "selected_troubleshooter_id": match.get("troubleshooter_id")
+            }
             buttons.append({
                 "title": name,
-                "payload": f'/select_troubleshooter{{"selected_troubleshooter":"{name}"}}'
+                "payload": "/select_troubleshooter" + json.dumps(payload_dict)
             })
 
         buttons.append({
@@ -809,24 +839,57 @@ class ActionRunSelectedTroubleshooter(Action):
 
     def run(self, dispatcher, tracker, domain):
         t = tracker.get_slot("selected_troubleshooter")
+        email = tracker.get_slot("user_email")
 
         if not t:
             dispatcher.utter_message("No troubleshooter was selected.")
             return [FollowupAction("action_listen")]
 
         if t == "__NOT_LISTED__":
-            dispatcher.utter_message(
-                "Got it. I’ll look for a more detailed solution instead."
-            )
             return [
                 SlotSet("awaiting_satisfaction_feedback", None),
                 FollowupAction("action_get_troubleshooter_sop")
             ]
 
-        dispatcher.utter_message(f"I’ve run the troubleshooter: {t}.")
-        dispatcher.utter_message("Did this solution work for you?")
+        email = "harsh.vardhan@workelevate.ai"
+        email = email.split("@")[0]
+
+        ps_id = tracker.get_slot("selected_troubleshooter_ps_id")
+        ts_id = tracker.get_slot("selected_troubleshooter_id")
+
+        if ps_id and str(ps_id) != "0":
+            item_id = ps_id
+        else:
+            item_id = ts_id
+
+        if not item_id:
+            dispatcher.utter_message(
+                "Unable to run this troubleshooter right now."
+            )
+            return [FollowupAction("action_listen")]
+
+        try:
+            schedule_agent_job(
+                user_identity=email,
+                item_id=str(item_id),
+                action_code="TRBL",
+                custom_job_name=f"Troubleshooter - {t}"
+            )
+        except Exception:
+            dispatcher.utter_message("Failed to Schedule troubleshooter job.")
+            return [FollowupAction("action_listen")]
+
+        dispatcher.utter_message(
+            f"The troubleshooter '{t}' has been scheduled successfully."
+        )
+        dispatcher.utter_message(
+            "I’ll notify you once it completes. Did this resolve your issue?"
+        )
 
         return [
+            SlotSet("selected_troubleshooter", None),
+            SlotSet("selected_troubleshooter_ps_id", None),
+            SlotSet("selected_troubleshooter_id", None),
             SlotSet("awaiting_satisfaction_feedback", "ts_list"),
             FollowupAction("action_listen")
         ]
@@ -998,16 +1061,35 @@ class ActionHandleSoftwareRequest(Action):
     def run(self, dispatcher, tracker, domain):
         software_query = tracker.get_slot("software_name")
         confirmed_software = tracker.get_slot("confirmed_software_name")
+        email = tracker.get_slot("user_email")
 
         if confirmed_software:
             software_name = confirmed_software
-            software_info = SOFTWARES[software_name]
+
+            matches = resolve_software_matches(software_name)
+            if not matches:
+                dispatcher.utter_message("1. I couldn’t find 1 that software in our approved catalog. I’ll raise a ticket for you.")
+                return [
+                    SlotSet("short_description", f"Software installation request - {software_name} not found"),
+                    SlotSet(
+                        "ticket_description",
+                        f"User requested installation of '{software_name}'.\n"
+                        "The software was not found in the approved catalog."
+                    ),
+                    SlotSet("category", "Software"),
+                    SlotSet("software_name", None),
+                    SlotSet("confirmed_software_name", None),
+                    ActiveLoop(None),
+                    FollowupAction("create_ticket_form")
+                ]
+
+            software_name, software_info = matches[0]
 
             events = [
                 SlotSet("software_name", None)
             ]
 
-            if software_info.get("is_blacklisted"):
+            if (not software_info.get("is_active")) or (not software_info.get("allow_to_user")):
                 dispatcher.utter_message(
                     f"{software_name.title()} is not allowed on company devices."
                 )
@@ -1021,7 +1103,7 @@ class ActionHandleSoftwareRequest(Action):
                     FollowupAction("action_listen")
                 ]
 
-            if software_info.get("is_restricted") or software_info.get("license_type") == "licensed":
+            if (not software_info.get("allow_to_automation")) or software_info.get("is_consent"):
                 dispatcher.utter_message(
                     f"{software_name.title()} requires approval before installation.\n"
                     "I’ll raise a request for approval."
@@ -1032,24 +1114,36 @@ class ActionHandleSoftwareRequest(Action):
                     SlotSet(
                         "ticket_description",
                         f"User requested installation of {software_name.title()}.\n"
-                        f"Source: {software_info.get('source')}\n"
-                        f"License type: {software_info.get('license_type')}\n"
+                        f"Vendor: {software_info.get('vendor')}\n"
+                        f"Version: {software_info.get('version')}\n"
                         f"Approval required."
                     ),
                     SlotSet("category", "Software"),
+                    SlotSet("software_name", None),
+                    SlotSet("confirmed_software_name", None),
                     ActiveLoop(None),
                     FollowupAction("create_ticket_form")
                 ]
+            
+            email = email.split("@")[0]
 
-            dispatcher.utter_message(
-                f"{software_name.title()} installation has been triggered successfully."
-            )
+            try:
+                schedule_agent_job(
+                    user_identity=email,
+                    item_id=software_info.get("software_id"),
+                    action_code="SFT",
+                    custom_job_name=f"{software_name.capitalize()} Installation"
+                )
+            except Exception:
+                dispatcher.utter_message("Failed to schedule software installation.")
+                return [FollowupAction("action_listen")]
 
-            dispatcher.utter_message(
-                "Is there anything else I can help you with?"
-            )
+            dispatcher.utter_message(f"The software '{software_name}' has been scheduled successfully for installation.")
+            dispatcher.utter_message("I’ll notify you once it completes. Did this resolve your issue?")
 
             return events + [
+                SlotSet("awaiting_satisfaction_feedback", "software_install"),
+                SlotSet("user_query", f"Software installation: {software_name}"),
                 ActiveLoop(None),
                 FollowupAction("action_listen")
             ]
@@ -1070,12 +1164,10 @@ class ActionHandleSoftwareRequest(Action):
                 FollowupAction("create_ticket_form")
             ]
 
-        matches = resolve_software_matches(software_query.lower())
+        matches = resolve_software_matches(software_query)
 
         if not matches:
-            dispatcher.utter_message(
-                "I couldn’t find that software in our approved catalog. I’ll raise a ticket for you."
-            )
+            dispatcher.utter_message("I couldn’t find that 2 software in our approved catalog. I’ll raise a ticket for you.")
 
             return [
                 SlotSet("short_description", f"Software installation request - {software_query.title()} not found"),
@@ -1113,7 +1205,7 @@ class ActionHandleSoftwareRequest(Action):
 
         events = [SlotSet("software_name", None)]
 
-        if software_info.get("is_blacklisted"):
+        if (not software_info.get("is_active")) or (not software_info.get("allow_to_user")):
             dispatcher.utter_message(
                 f"{software_name.title()} is not allowed on company devices."
             )
@@ -1126,7 +1218,7 @@ class ActionHandleSoftwareRequest(Action):
                 FollowupAction("action_listen")
             ]
 
-        if software_info.get("is_restricted") or software_info.get("license_type") == "licensed":
+        if (not software_info.get("allow_to_automation")) or software_info.get("is_consent"):
             dispatcher.utter_message(
                 f"{software_name.title()} requires approval before installation.\n"
                 "I’ll raise a request for approval."
@@ -1137,35 +1229,95 @@ class ActionHandleSoftwareRequest(Action):
                 SlotSet(
                     "ticket_description",
                     f"User requested installation of {software_name.title()}.\n"
-                    f"Source: {software_info.get('source')}\n"
-                    f"License type: {software_info.get('license_type')}\n"
+                    f"Vendor: {software_info.get('vendor')}\n"
+                    f"Version: {software_info.get('version')}\n"
                     f"Approval required."
                 ),
                 SlotSet("category", "Software"),
+                SlotSet("software_name", None),
+                SlotSet("confirmed_software_name", None),
                 ActiveLoop(None),
                 FollowupAction("create_ticket_form")
             ]
 
-        dispatcher.utter_message(
-            f"{software_name.title()} installation has been triggered successfully."
-        )
+        email = email.split("@")[0]
 
-        dispatcher.utter_message(
-            "Is there anything else I can help you with?"
-        )
+        try:
+            schedule_agent_job(
+                user_identity=email,
+                item_id=software_info.get("software_id"),
+                action_code="SFT",
+                custom_job_name=f"{software_name.capitalize()} Installation"
+            )
+        except Exception:
+            dispatcher.utter_message("Failed to schedule software installation.")
+            return [FollowupAction("action_listen")]
+
+        dispatcher.utter_message(f"The software '{software_name}' has been scheduled successfully for installation.")
+        dispatcher.utter_message("I’ll notify you once it completes. Did this resolve your issue?")
 
         return events + [
+            SlotSet("awaiting_satisfaction_feedback", "software_install"),
+            SlotSet("user_query", f"Software installation: {software_name}"),
             SlotSet("software_name", None),
             SlotSet("confirmed_software_name", None),
             ActiveLoop(None),
             FollowupAction("action_listen")
         ]
 
-with open("softwares.json", "r", encoding="utf-8") as f:
-    SOFTWARES = json.load(f)
+def get_action_list(sync_type):
+    url = "https://dev.workelevate.com/api/Chatbot/SyncActionData"
 
-def resolve_software_matches(software_name: str, limit: int = 5, threshold: int = 85):
-    matches = process.extract(software_name, SOFTWARES.keys(), limit=limit, scorer = fuzz.partial_ratio)
+    payload = {
+        'machine_name': '',
+        'domain_name': 'progressive.in',
+        'user_name': 'harsh.vardhan',
+        'sync_type': f'{sync_type}',
+        'domain_id': 2,
+        'platform_id': 1
+    }
+
+    headers = {
+        "accept": "*/*",
+        "Authorization": f"Bearer {os.getenv('JOB_SCHEDULER_SYNC_DATA_BEARER_TOKEN')}",
+        "Content-Type": "application/json-patch+json"
+    }
+
+    response = requests.post(
+        url,
+        data=json.dumps(payload),
+        headers=headers,
+        timeout=10
+    )
+
+    response.raise_for_status()
+
+    try:
+        return response.json()
+    except Exception:
+        return response.text
+
+def get_software_catalog_map():
+    data = get_action_list(sync_type=2)
+
+    catalog = {}
+    for s in data:
+        name = (s.get("software_display_name") or s.get("software_name") or "").strip()
+        if name:
+            catalog[name] = s
+
+    return catalog
+
+def resolve_software_matches(software_name: str, limit: int = 5, threshold: int = 70):
+    SOFTWARES = get_software_catalog_map()
+
+    matches = process.extract(
+        software_name,
+        SOFTWARES.keys(),
+        limit=limit,
+        scorer=fuzz.partial_ratio,
+        processor=lambda s: s.lower()
+    )
 
     results = []
     for best_match, score, _ in matches:
@@ -1173,6 +1325,64 @@ def resolve_software_matches(software_name: str, limit: int = 5, threshold: int 
             results.append((best_match, SOFTWARES[best_match]))
 
     return results
+
+class ActionHandleUserSatisfactionProvisioning(Action):
+    def name(self):
+        return "action_handle_user_satisfaction_provisioning"
+
+    def run(self, dispatcher, tracker, domain):
+        text = tracker.latest_message.get("text", "").lower().strip()
+        stage = tracker.get_slot("awaiting_satisfaction_feedback")
+        user_query = tracker.get_slot("user_query") or "Provisioning request"
+
+        positive_phrases = [
+            "yes", "yeah", "yup", "sure", "that helped", "it helped", "this helped",
+            "yes it worked", "that worked", "looks good", "all good", "satisfied",
+            "i'm satisfied", "resolved", "problem solved"
+        ]
+
+        negative_phrases = [
+            "no", "nope", "not really", "no thanks", "it didn't help",
+            "that didn't help", "it didn't", "this didn't work", "it didn't work",
+            "not helpful", "still not working", "not resolved",
+            "i'm not satisfied", "no it did not", "this didn't solve my problem"
+        ]
+
+        is_positive = any(p in text for p in positive_phrases)
+        is_negative = any(n in text for n in negative_phrases)
+
+        if not is_positive and not is_negative:
+            dispatcher.utter_message("Please reply with yes or no.")
+            return [FollowupAction("action_listen")]
+
+        if is_positive and not is_negative:
+            dispatcher.utter_message("Great. Let me know if you need anything else.")
+
+            return [
+                SlotSet("awaiting_satisfaction_feedback", None),
+                ActiveLoop(None),
+                FollowupAction("action_listen")
+            ]
+
+        if is_negative:
+            dispatcher.utter_message("I’ll raise a ticket for you.")
+
+            category = "Software" if stage == "software_install" else "Hardware"
+
+            return [
+                SlotSet("short_description", f"Unsuccessful request - {user_query}"),
+                SlotSet(
+                    "ticket_description",
+                    f"User request:\n{user_query}\n\n"
+                    "The automated installation did not resolve the issue."
+                ),
+                SlotSet("category", category),
+
+                SlotSet("awaiting_satisfaction_feedback", None),
+
+                ActiveLoop(None),
+                FollowupAction("create_ticket_form")
+            ]
 
 class ActionListPrintersByLocation(Action):
     def name(self):
@@ -1185,11 +1395,12 @@ class ActionListPrintersByLocation(Action):
             dispatcher.utter_message("Please select a location.")
             return []
 
-        with open("printers.json", "r", encoding="utf-8") as f:
-            printers_data = json.load(f)
-
-        location_key = location.strip().lower()
-        printers = printers_data.get(location_key)
+        printers_data = get_action_list(sync_type = 1)
+        printers = [
+            p for p in printers_data
+            if p.get("is_active")
+            and p.get("allow_to_user")
+        ]
 
         if not printers:
             dispatcher.utter_message(
@@ -1203,8 +1414,8 @@ class ActionListPrintersByLocation(Action):
 
         buttons = [
             {
-                "title": f"{p['id']} — {p['name']}",
-                "payload": f'/select_printer{{"selected_printer":"{p["id"]}"}}'
+                "title": f"{p.get('driver_id')} — {p.get('printer_displayname') or p.get('printer_name')}",
+                "payload": f'/select_printer{{"selected_printer":"{p.get("driver_id")}"}}'
             }
             for p in printers
         ]
@@ -1229,16 +1440,41 @@ class ActionTriggerPrinterInstallation(Action):
             dispatcher.utter_message("Missing details to proceed.")
             return []
 
-        dispatcher.utter_message(
-            "Printer installation has been triggered successfully."
-        )
-        dispatcher.utter_message(
-            "Is there anything else I can help you with?"
+        printers_data = get_action_list(sync_type = 1)
+        selected = next(
+            (p for p in printers_data if str(p.get("driver_id")) == str(printer)),
+            None
         )
 
+        if not selected:
+            dispatcher.utter_message("Selected printer is no longer available.")
+            return [
+                SlotSet("selected_printer", None)
+            ]
+
+        email = email.split("@")[0]
+        try:
+            schedule_agent_job(
+                user_identity=email,
+                item_id=str(selected.get("driver_id")),
+                action_code="PRT",
+                custom_job_name=f"{selected.get('printer_displayname') or selected.get('printer_name')} Installation"
+            )
+        except Exception:
+            dispatcher.utter_message("Failed to schedule printer installation.")
+            return []
+
+        printer_name = selected.get("printer_displayname") or selected.get("printer_name")
+        dispatcher.utter_message(f"The printer '{printer_name}' has been scheduled successfully for installation.")
+        dispatcher.utter_message("I’ll notify you once it completes. Did this resolve your issue?")
+
         return [
+            SlotSet("awaiting_satisfaction_feedback", "printer_install"),
+            SlotSet("user_query", f"Printer installation: {printer_name}"),
             SlotSet("printer_location", None),
-            SlotSet("selected_printer", None)
+            SlotSet("selected_printer", None),
+            ActiveLoop(None),
+            FollowupAction("action_listen")
         ]
 
 class ActionEndChat(Action):
@@ -1246,8 +1482,8 @@ class ActionEndChat(Action):
         return "action_end_chat"
 
     def run(self, dispatcher, tracker, domain):
-        print("Session Ended")
         dispatcher.utter_message("Thanks for chatting! Have a great day. 👋")
+        dispatcher.utter_message(json_message={"type": "CHAT_END"})
 
         return [
             ActiveLoop(None),
@@ -1255,6 +1491,17 @@ class ActionEndChat(Action):
             FollowupAction("action_listen")
         ]
 
+class ActionSessionTimeout(Action):
+    def name(self):
+        return "action_session_timeout"
+
+    def run(self, dispatcher, tracker, domain):
+        print("Ending Chat")
+        dispatcher.utter_message("Looks like you were inactive. I’m closing this chat now.")
+
+        return [AllSlotsReset()]
+
+# It should disable chat even after reload
 
 # Ask if anything else to do
 # end convo after a certain time period (inactivity)

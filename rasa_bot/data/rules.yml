@@ -96,15 +96,15 @@ rules:
     steps:
       - intent: report_issue
       - action: action_find_troubleshooter
-  
+
   - rule: Handle user satisfaction after troubleshooter query
     condition:
       - slot_was_set:
-        - troubleshooter_query_completed: true
+          - troubleshooter_query_completed: true
     steps:
       - intent: user_satisfaction_response
       - action: action_handle_user_satisfaction_troubleshooter
-  
+
   - rule: Run selected troubleshooter
     condition:
       - slot_was_set:
@@ -124,7 +124,7 @@ rules:
       - action: software_request_form
       - active_loop: null
       - action: action_handle_software_request
-  
+
   - rule: Handle software selection via inform
     condition:
       - slot_was_set:
@@ -132,6 +132,14 @@ rules:
     steps:
       - intent: inform
       - action: action_handle_software_request
+
+  - rule: Handle software satisfaction
+    condition:
+      - slot_was_set:
+          - awaiting_satisfaction_feedback: software_install
+    steps:
+      - intent: user_satisfaction_response
+      - action: action_handle_user_satisfaction_provisioning
 
   - rule: Start printer configuration
     steps:
@@ -147,8 +155,8 @@ rules:
 
   - rule: Handle printer location
     condition:
-    - slot_was_set:
-        - printer_location
+      - slot_was_set:
+          - printer_location
     steps:
       - intent: inform
       - action: action_list_printers_by_location
@@ -158,17 +166,27 @@ rules:
       - intent: select_printer
       - action: action_trigger_printer_installation
 
+  - rule: Handle printer satisfaction
+    condition:
+      - slot_was_set:
+          - awaiting_satisfaction_feedback: printer_install
+    steps:
+      - intent: user_satisfaction_response
+      - action: action_handle_user_satisfaction_provisioning
+
   - rule: End chat
     steps:
       - intent: exit_chat
-      - action: action_end_chat
-
-  - rule: Inactivity timeout 
-    steps: 
-      - intent: EXTERNAL_inactivity_timeout 
       - action: action_end_chat
 
   - rule: Greet user
     steps:
       - intent: greet
       - action: utter_greet_user
+  
+  - rule: Handle session timeout during a form
+    steps:
+      - intent: session_timeout
+      - action: action_deactivate_loop
+      - active_loop: null
+      - action: action_session_timeout
