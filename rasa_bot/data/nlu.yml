@@ -115,12 +115,24 @@ nlu:
       - how do i get medical benefits
       - how can i request vacation days
       - how is employee attendance tracked
+      - how is attendance tracked
+      - how do we mark attendance
+      - where can i see my attendance
+      - how does attendance work in the company
+      - what is the attendance policy
+      - what are the working hours
       - what is the working hours policy
       - do we have maternity leave
       - is there a bonus policy in the company
       - how do i update my personal details in the hr system
+      - how can i change my personal information in hr portal
       - what is the performance evaluation process
+      - how does performance appraisal work
       - what are the guidelines for business attire
+      - what benefits do employees get
+      - tell me about payroll policy
+      - how does salary processing work
+      - what is the leave approval process
 
   - intent: ask_workelevate_queries
     examples: |
@@ -134,28 +146,6 @@ nlu:
       - is workelevate a tool for businesses or individuals
       - does workelevate integrate with other tools
       - does workelevate offer analytics and reporting features
-
-  # - intent: report_issue
-  #   examples: |
-  #     - outlook isn’t opening
-  #     - cannot see my emails
-  #     - laptop keeps shutting down randomly
-  #     - wifi is slow
-  #     - laptop feels slow
-  #     - printer is not working
-  #     - having trouble with microsoft teams
-  #     - chrome is running slow
-  #     - outlook keeps crashing
-  #     - internet speed is poor
-  #     - unable to connect to internet
-  #     - browser not loading pages
-  #     - facing problem in sending mail
-  #     - web pages take long to load
-  #     - gmail won’t sync
-  #     - outlook keeps asking for password
-  #     - teams call is dropping frequently
-  #     - need help with onedrive sync issue
-  #     - unable to connect to vpn
 
   - intent: report_issue
     examples: |
@@ -311,8 +301,6 @@ nlu:
       - i'm done
       - i'm finished
       - please end the chat
-      - i want to exit
-      - i want to quit
       - stop the chat
       - end this conversation
       - close this conversation
@@ -338,16 +326,12 @@ nlu:
       - hello assistant
       - hey assistant
 
-  - intent: user_satisfaction_response
+  - intent: user_satisfaction_positive
     examples: |
       - yes
-      - no
       - yeah
       - yup
       - sure
-      - nope
-      - not really
-      - no thanks
       - that helped
       - it helped
       - this helped
@@ -359,6 +343,13 @@ nlu:
       - i'm satisfied
       - resolved
       - problem solved
+
+  - intent: user_satisfaction_negative
+    examples: |
+      - no
+      - nope
+      - not really
+      - no thanks
       - it didn't help
       - that didn't help
       - this didn't work
@@ -368,3 +359,31 @@ nlu:
       - not resolved
       - i'm not satisfied
       - this didn't solve my problem
+
+  - lookup: hr_keywords
+    examples: |
+      - hr
+      - hr policy
+      - hr rules
+      - attendance
+      - leave
+      - sick leave
+      - maternity leave
+      - vacation
+      - holiday list
+      - working hours
+      - shift timing
+      - payroll
+      - salary
+      - payslip
+      - bonus
+      - benefits
+      - medical benefits
+      - dress code
+      - appraisal
+      - performance evaluation
+      - promotion policy
+      - leave approval
+      - employee benefits
+      - personal details
+      - hr portal

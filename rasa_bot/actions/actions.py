@@ -373,7 +373,7 @@ class ActionUpdateTicketDescription(Action):
         else:
             ticket_id = result.get("ticket_id")
             dispatcher.utter_message(text=f"Ticket ID {ticket_id} has been updated with the new description")
-            dispatcher.utter_message("Is there anything else I can help you with?")
+            dispatcher.utter_message("Let me know if you need anything else.")
         
         return [
             SlotSet("ticket_id_update", None),
@@ -475,7 +475,7 @@ class ActionUpdateTicketStatus(Action):
 
         if "error" in result:
             dispatcher.utter_message(f"Failed to update the ticket status: {result['error']}")
-            dispatcher.utter_message("Is there anything else I can help you with?")
+            dispatcher.utter_message("Let me know if you need anything else.")
             return [
                 SlotSet("user_email", None),
                 SlotSet("ticket_id_update", None),
@@ -484,7 +484,7 @@ class ActionUpdateTicketStatus(Action):
         else:
             ticket_id = result.get("ticket_id")
             dispatcher.utter_message(text=f"Ticket ID {ticket_id} has been updated to {new_status}.")
-            dispatcher.utter_message("Is there anything else I can help you with?")
+            dispatcher.utter_message("Let me know if you need anything else.")
         
         return [
             SlotSet("ticket_id_update", None),
@@ -621,29 +621,15 @@ class ActionHandleUserSatisfaction(Action):
         return "action_handle_user_satisfaction"
 
     def run(self, dispatcher, tracker, domain):
-        text = tracker.latest_message.get("text", "").lower().strip()
+        intent = tracker.latest_message.get("intent", {}).get("name")
         user_query = tracker.get_slot("user_query") or "HR / WorkElevate query"
 
-        positive_phrases = [
-            "yes", "yeah", "yup", "sure", "that helped", "it helped", "this helped",
-            "yes it worked", "that worked", "looks good", "all good", "satisfied",
-            "i'm satisfied", "resolved", "problem solved"
-        ]
+        if intent == "user_satisfaction_positive":
 
-        negative_phrases = [
-            "no", "nope", "not really", "no thanks", "it didn't help",
-            "that didn't help", "it didn't", "this didn't work", "it didn't work",
-            "not helpful", "still not working", "not resolved",
-            "i'm not satisfied", "no it did not", "this didn't solve my problem"
-        ]
-
-        is_positive = any(p in text for p in positive_phrases)
-        is_negative = any(n in text for n in negative_phrases)
-
-        if is_positive and not is_negative:
             dispatcher.utter_message(
                 "Great! I'm glad I could help. Let me know if you need anything else."
             )
+
             return [
                 SlotSet("hr_query_completed", None),
                 SlotSet("we_query_completed", None),
@@ -652,10 +638,12 @@ class ActionHandleUserSatisfaction(Action):
                 FollowupAction("action_listen")
             ]
 
-        if is_negative:
+        if intent == "user_satisfaction_negative":
+
             dispatcher.utter_message(
                 "Sorry to hear that! I'll raise a ticket for you right away."
             )
+
             return [
                 SlotSet("short_description", "Unresolved HR / WorkElevate query"),
                 SlotSet(
@@ -673,8 +661,7 @@ class ActionHandleUserSatisfaction(Action):
             ]
 
         dispatcher.utter_message(
-            "I'm sorry, I didn't understand. Please type 'yes' if you're satisfied "
-            "or 'no' if you'd like to raise a ticket."
+            "Please reply with yes or no."
         )
         return [FollowupAction("action_listen")]
 
@@ -945,25 +932,12 @@ class ActionHandleUserSatisfactionTroubleShooter(Action):
         return "action_handle_user_satisfaction_troubleshooter"
 
     def run(self, dispatcher, tracker, domain):
-        text = tracker.latest_message.get("text", "").lower().strip()
+        intent = tracker.latest_message.get("intent", {}).get("name")
         stage = tracker.get_slot("awaiting_satisfaction_feedback")
         user_query = tracker.get_slot("user_query") or "Technical issue"
 
-        positive_phrases = [
-            "yes", "yeah", "yup", "sure", "that helped", "it helped", "this helped",
-            "yes it worked", "that worked", "looks good", "all good", "satisfied",
-            "i'm satisfied", "resolved", "problem solved"
-        ]
-
-        negative_phrases = [
-            "no", "nope", "not really", "no thanks", "it didn't help",
-            "that didn't help", "it didn't", "this didn't work", "it didn't work",
-            "not helpful", "still not working", "not resolved",
-            "i'm not satisfied", "no it did not", "this didn't solve my problem"
-        ]
-
-        is_positive = any(p in text for p in positive_phrases)
-        is_negative = any(n in text for n in negative_phrases)
+        is_positive = intent == "user_satisfaction_positive"
+        is_negative = intent == "user_satisfaction_negative"
 
         if not is_positive and not is_negative:
             dispatcher.utter_message("Please reply with yes or no.")
@@ -1144,6 +1118,8 @@ class ActionHandleSoftwareRequest(Action):
             return events + [
                 SlotSet("awaiting_satisfaction_feedback", "software_install"),
                 SlotSet("user_query", f"Software installation: {software_name}"),
+                SlotSet("software_name", None),
+                SlotSet("confirmed_software_name", None),
                 ActiveLoop(None),
                 FollowupAction("action_listen")
             ]
@@ -1331,25 +1307,12 @@ class ActionHandleUserSatisfactionProvisioning(Action):
         return "action_handle_user_satisfaction_provisioning"
 
     def run(self, dispatcher, tracker, domain):
-        text = tracker.latest_message.get("text", "").lower().strip()
+        intent = tracker.latest_message.get("intent", {}).get("name")
         stage = tracker.get_slot("awaiting_satisfaction_feedback")
         user_query = tracker.get_slot("user_query") or "Provisioning request"
 
-        positive_phrases = [
-            "yes", "yeah", "yup", "sure", "that helped", "it helped", "this helped",
-            "yes it worked", "that worked", "looks good", "all good", "satisfied",
-            "i'm satisfied", "resolved", "problem solved"
-        ]
-
-        negative_phrases = [
-            "no", "nope", "not really", "no thanks", "it didn't help",
-            "that didn't help", "it didn't", "this didn't work", "it didn't work",
-            "not helpful", "still not working", "not resolved",
-            "i'm not satisfied", "no it did not", "this didn't solve my problem"
-        ]
-
-        is_positive = any(p in text for p in positive_phrases)
-        is_negative = any(n in text for n in negative_phrases)
+        is_positive = intent == "user_satisfaction_positive"
+        is_negative = intent == "user_satisfaction_negative"
 
         if not is_positive and not is_negative:
             dispatcher.utter_message("Please reply with yes or no.")

@@ -66,12 +66,20 @@ rules:
       - intent: ask_hr_queries
       - action: action_get_hr_response
 
-  - rule: Handle user satisfaction after HR query
+  - rule: Handle user satisfaction after HR query (positive)
     condition:
       - slot_was_set:
           - hr_query_completed: true
     steps:
-      - intent: user_satisfaction_response
+      - intent: user_satisfaction_positive
+      - action: action_handle_user_satisfaction
+
+  - rule: Handle user satisfaction after HR query (negative)
+    condition:
+      - slot_was_set:
+          - hr_query_completed: true
+    steps:
+      - intent: user_satisfaction_negative
       - action: action_handle_user_satisfaction
 
   - rule: Solve Workelevate related queries
@@ -79,12 +87,20 @@ rules:
       - intent: ask_workelevate_queries
       - action: action_get_workelevate_response
 
-  - rule: Handle user satisfaction after WE query
+  - rule: Handle user satisfaction after WE query (positive)
     condition:
       - slot_was_set:
           - we_query_completed: true
     steps:
-      - intent: user_satisfaction_response
+      - intent: user_satisfaction_positive
+      - action: action_handle_user_satisfaction
+
+  - rule: Handle user satisfaction after WE query (negative)
+    condition:
+      - slot_was_set:
+          - we_query_completed: true
+    steps:
+      - intent: user_satisfaction_negative
       - action: action_handle_user_satisfaction
 
   - rule: Handle unknown queries
@@ -97,12 +113,20 @@ rules:
       - intent: report_issue
       - action: action_find_troubleshooter
 
-  - rule: Handle user satisfaction after troubleshooter query
+  - rule: Handle user satisfaction after troubleshooter (positive)
     condition:
       - slot_was_set:
           - troubleshooter_query_completed: true
     steps:
-      - intent: user_satisfaction_response
+      - intent: user_satisfaction_positive
+      - action: action_handle_user_satisfaction_troubleshooter
+
+  - rule: Handle user satisfaction after troubleshooter (negative)
+    condition:
+      - slot_was_set:
+          - troubleshooter_query_completed: true
+    steps:
+      - intent: user_satisfaction_negative
       - action: action_handle_user_satisfaction_troubleshooter
 
   - rule: Run selected troubleshooter
@@ -133,12 +157,20 @@ rules:
       - intent: inform
       - action: action_handle_software_request
 
-  - rule: Handle software satisfaction
+  - rule: Handle software satisfaction (positive)
     condition:
       - slot_was_set:
           - awaiting_satisfaction_feedback: software_install
     steps:
-      - intent: user_satisfaction_response
+      - intent: user_satisfaction_positive
+      - action: action_handle_user_satisfaction_provisioning
+
+  - rule: Handle software satisfaction (negative)
+    condition:
+      - slot_was_set:
+          - awaiting_satisfaction_feedback: software_install
+    steps:
+      - intent: user_satisfaction_negative
       - action: action_handle_user_satisfaction_provisioning
 
   - rule: Start printer configuration
@@ -166,12 +198,20 @@ rules:
       - intent: select_printer
       - action: action_trigger_printer_installation
 
-  - rule: Handle printer satisfaction
+  - rule: Handle printer satisfaction (positive)
     condition:
       - slot_was_set:
           - awaiting_satisfaction_feedback: printer_install
     steps:
-      - intent: user_satisfaction_response
+      - intent: user_satisfaction_positive
+      - action: action_handle_user_satisfaction_provisioning
+
+  - rule: Handle printer satisfaction (negative)
+    condition:
+      - slot_was_set:
+          - awaiting_satisfaction_feedback: printer_install
+    steps:
+      - intent: user_satisfaction_negative
       - action: action_handle_user_satisfaction_provisioning
 
   - rule: End chat

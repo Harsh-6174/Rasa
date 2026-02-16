@@ -6,47 +6,8 @@ import json
 
 app = FastAPI()
 
-# TOP_K = 3
-# SIM_THRESHOLD = 0.25
-
-# model = SentenceTransformer("all-mpnet-base-v2")
-
-# with open("troubleshooters.json", "r", encoding="utf-8") as f:
-#     troubleshooters = json.load(f)
-
-# texts = [f"{t['name']} {t.get('description', '')}" for t in troubleshooters]
-
-# embeddings = model.encode(texts, normalize_embeddings = True, show_progress_bar = True)
-
-# @app.post("/match")
-# def match(payload: dict):
-#     query = payload.get("query", "").strip()
-#     if not query:
-#         return {"matches": []}
-
-#     query_embedding = model.encode([query], normalize_embeddings = True)
-
-#     scores = cosine_similarity(query_embedding, embeddings)[0]
-
-#     ranked = sorted(enumerate(scores), key = lambda x: x[1], reverse = True)
-
-#     results = []
-#     for idx, score in ranked[:TOP_K]:
-#         if score < SIM_THRESHOLD:
-#             continue
-
-#         troubleshooter = troubleshooters[idx]
-#         results.append({
-#             "troubleshooter_id": troubleshooter.get("troubleshooter_id"),
-#             "name": troubleshooter.get("name"),
-#             "score": float(score)
-#         })
-
-#     return {"matches": results}
-
-
 COLLECTION = "troubleshooters"
-SIM_THRESHOLD = 0.45
+SIM_THRESHOLD = 0.30
 TOP_K = 3
 EF_SEARCH = 64
 

@@ -144,7 +144,7 @@ responses:
     - text: "Ticket fetched"
 
   utter_ask_software_name:
-    - text: "[UTTER] - Which software would you like me to install?"
+    - text: "Which software would you like me to install?"
       buttons:
         - title: "Google Chrome"
           payload: '/inform{{"software_name":"google chrome"}}'
