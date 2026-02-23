@@ -71,33 +71,32 @@ nlu:
       - fetch my ticket
       - show my ticket
       - show my incident
-      - i need my ticket details
-      - i need my incident details
+      - want to see my ticket
+      - need my ticket details
+      - need my incident details
       - retrieve my ticket
-      - show me information for my ticket
-      - show the details of my ticket
-      - fetch my ticket by id
-      - open my ticket
-      - get my ticket details
-      - fetch my ticket [INC0012345](ticket_id)
-      - show my ticket [INC0098765](ticket_id)
-      - show my incident for [admin@example.com](user_email)
+      - show information for ticket
+      - show details of ticket
+      - fetch ticket by id
+      - get ticket details
+      - fetch ticket [INC0012345](ticket_id)
+      - show ticket [INC0098765](ticket_id)
+      - show incident for [admin@example.com](user_email)
       - fetch ticket for [admin@example.com](user_email)
 
   - intent: fetch_incidents
     examples: |
-      - show me last [5](num_tickets) tickets
-      - show me last [10](num_tickets) tickets
-      - show me last [3](num_tickets) tickets
-      - fetch my last [7](num_tickets) tickets
-      - show my last [6](num_tickets) tickets
-      - show my most recent [9](num_tickets) tickets
-      - give me last [4](num_tickets) tickets
-      - i need the last [8](num_tickets) tickets
-      - show me last [5](num_tickets) [incident](ticket_type) tickets
-      - show me the last [10](num_tickets) [incident](ticket_type) tickets
-      - fetch my last [3](num_tickets) [incident](ticket_type) tickets
-      - pull up my last [6](num_tickets) [incident](ticket_type) tickets
+      - show last [5](num_tickets) tickets
+      - show last [10](num_tickets) tickets
+      - show last [3](num_tickets) tickets
+      - fetch last [7](num_tickets) tickets
+      - show last [6](num_tickets) tickets
+      - show most recent [9](num_tickets) tickets
+      - give last [4](num_tickets) tickets
+      - need last [8](num_tickets) tickets
+      - show last [5](num_tickets) [incident](ticket_type) tickets
+      - fetch last [3](num_tickets) [incident](ticket_type) tickets
+      - pull last [6](num_tickets) [incident](ticket_type) tickets
       - show tickets for email [admin@example.com](user_email)
 
   - intent: ask_hr_queries
@@ -150,42 +149,41 @@ nlu:
   - intent: report_issue
     examples: |
       - outlook isn’t opening
-      - outlook is not launching on my system
-      - outlook keeps crashing when I open it
-      - outlook keeps asking for my password
+      - outlook not launching on my system
+      - outlook keeps crashing
+      - outlook keeps asking for password
 
-      - cannot see my emails
-      - my mailbox is not loading
-      - emails are not syncing in outlook
-      - I am not receiving new emails
+      - cannot see emails
+      - mailbox not loading
+      - emails not syncing in outlook
+      - not receiving new emails
 
       - laptop keeps shutting down randomly
-      - my laptop suddenly restarts on its own
+      - laptop suddenly restarts on its own
       - system is shutting down without warning
-      - my machine is crashing frequently
+      - machine is crashing frequently
 
       - wifi is slow
-      - office wifi is very slow today
-      - internet is extremely slow on my laptop
+      - office wifi is very slow
+      - internet is extremely slow on laptop
       - network speed is poor
 
       - laptop feels slow
-      - my system performance is very slow
-      - computer is taking a long time to respond
+      - system performance is very slow
+      - computer taking long time to respond
       - applications are very slow to open
 
-      - printer is not working
-      - unable to print from my system
-      - printer is offline in my laptop
+      - printer not working
+      - unable to print from system
+      - printer is offline in laptop
       - printing is failing from my computer
 
       - having trouble with microsoft teams
-      - microsoft teams is not opening
+      - microsoft teams not opening
       - teams is not connecting to meetings
       - teams keeps crashing during calls
-
       - teams call is dropping frequently
-      - my teams calls keep disconnecting
+      - teams calls keep disconnecting
       - audio and video keep dropping in teams meeting
 
       - chrome is running slow
@@ -199,22 +197,22 @@ nlu:
       - network keeps disconnecting
 
       - browser not loading pages
-      - web pages are not opening
+      - web pages not opening
       - websites are taking too long to load
-      - pages are stuck on loading
+      - pages stuck on loading
 
       - facing problem in sending mail
-      - I am unable to send emails
+      - unable to send emails
       - outgoing mails are failing
       - email is stuck in outbox
 
       - gmail won’t sync
-      - gmail is not syncing on my laptop
-      - gmail is not updating emails
+      - gmail not syncing on laptop
+      - gmail not updating emails
 
       - need help with onedrive sync issue
-      - onedrive is not syncing my files
-      - files are not uploading to onedrive
+      - onedrive not syncing files
+      - files not uploading to onedrive
       - onedrive shows sync error
 
       - having trouble with vpn
@@ -232,12 +230,11 @@ nlu:
       - something is wrong with my system, it is very slow and keeps hanging
       - I am unable to work because most applications are not opening
 
-
   - intent: request_software
     examples: |
       - install [google chrome](software_name)
       - install [microsoft teams](software_name)
-      - i want to install [vscode](software_name)
+      - want to install [vscode](software_name)
       - want to install [visual studio code](software_name)
       - please install [pycharm](software_name)
       - please download [adobe](software_name) in my laptop
@@ -254,31 +251,15 @@ nlu:
 
   - intent: request_printer
     examples: |
-      - i want to configure a printer
-      - i want to setup a printer
-      - i need help with printer configuration
-      - can you configure a printer for me
+      - want to configure printer
+      - want to setup printer
+      - install printer
+      - need help with printer configuration
+      - configure a printer for me
       - please setup a printer
-      - help me install a printer
-      - i want to install a printer on my system
-      - add a printer to my laptop
-      - add printer to my system
-      - printer installation required
-      - printer setup required
-      - need printer access
-      - need to connect to office printer
-      - connect printer to my system
-      - setup office printer
-      - configure office printer
-      - install office printer
-      - i am unable to add a printer
-      - how do i setup a printer
-      - how can i configure printer
-      - printer is not configured
-      - i need a printer configured for my system
-      - want to use office printer
-      - need printer configured for work
-      - please configure printer for me
+      - help me install printer
+      - want to install printer on system
+      - add printer to my laptop
 
   - intent: exit_chat
     examples: |
@@ -290,8 +271,9 @@ nlu:
       - end
       - end chat
       - close chat
-      - that's all
       - no thanks
+      - nothing else
+      - i am done
       - nothing else
       - done
       - finished

@@ -1,15 +1,13 @@
 from fastapi import FastAPI
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
-from sklearn.metrics.pairwise import cosine_similarity
-import json
 
 app = FastAPI()
 
 COLLECTION = "troubleshooters"
-SIM_THRESHOLD = 0.30
+SIM_THRESHOLD = 0.25
 TOP_K = 3
-EF_SEARCH = 64
+EF_SEARCH = 128
 
 model = SentenceTransformer("all-mpnet-base-v2")
 client = QdrantClient(host = "localhost", port = 6333)

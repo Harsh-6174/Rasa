@@ -605,7 +605,7 @@ class ActionGetHRResponse(Action):
             raw_answer = response_data.get("answer", "")
             clean_answer = re.search(r'</think>(.*)', raw_answer, re.DOTALL)
             dispatcher.utter_message(clean_answer.group(1).strip())
-            dispatcher.utter_message('HR - Are you happy with the solution?')
+            dispatcher.utter_message('Are you happy with the solution?')
         except Exception as e:
             dispatcher.utter_message("There was an error with the HR API request")
             print(f"Error: {e}")
@@ -702,7 +702,7 @@ class ActionGetWorkElevateResponse(Action):
             raw_answer = response_data.get("answer", "")
             clean_answer = re.search(r'</think>(.*)', raw_answer, re.DOTALL)
             dispatcher.utter_message(clean_answer.group(1).strip())
-            dispatcher.utter_message('\n \nWE - Are you happy with the solution?')
+            dispatcher.utter_message('\n \nAre you happy with the solution?')
         except Exception as e:
             dispatcher.utter_message("There was an error with the WE API request")
             print(f"Error: {e}")
@@ -1468,6 +1468,5 @@ class ActionSessionTimeout(Action):
 
 # Ask if anything else to do
 # end convo after a certain time period (inactivity)
-# end convo button
 # not allow new message after ending in same session
 # If user wants to see ticket and doesn't know the ID, use their email to fetch ticket numbers and let them choose
