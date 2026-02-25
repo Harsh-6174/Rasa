@@ -2,7 +2,7 @@ import json, os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from rapidfuzz import process, fuzz
-from rasa_sdk import Action
+from rasa_sdk import Action, FormValidationAction
 from rasa_sdk.events import SlotSet, FollowupAction, ActiveLoop, AllSlotsReset, ReminderScheduled
 import re, requests
 from requests.auth import HTTPBasicAuth
@@ -752,6 +752,21 @@ def schedule_agent_job(user_identity, item_id, action_code, custom_job_name=None
     except Exception:
         return response.text
 
+class ValidateEmailForm(FormValidationAction):
+
+    def name(self):
+        return "validate_email_form"
+
+    def validate_user_email(self, value, dispatcher, tracker, domain):
+
+        pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+
+        if re.match(pattern, value):
+            return {"user_email": value}
+
+        dispatcher.utter_message(text="That doesn’t look like a valid email. Please enter a correct one.")
+        return {"user_email": None}
+
 class ActionFindTroubleshooter(Action):
     def name(self):
         return "action_find_troubleshooter"
@@ -838,7 +853,10 @@ class ActionRunSelectedTroubleshooter(Action):
                 FollowupAction("action_get_troubleshooter_sop")
             ]
 
-        email = "harsh.vardhan@workelevate.ai"
+        email = tracker.get_slot("user_email")
+        if not email:
+            return [FollowupAction("email_form")]
+        
         email = email.split("@")[0]
 
         ps_id = tracker.get_slot("selected_troubleshooter_ps_id")

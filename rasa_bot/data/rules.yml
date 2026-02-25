@@ -108,6 +108,19 @@ rules:
       - intent: fallback
       - action: action_default_fallback
 
+  - rule: Activate email form
+    steps:
+      - action: email_form
+      - active_loop: email_form
+
+  - rule: Submit email form and resume troubleshooter
+    condition:
+      - active_loop: email_form
+    steps:
+      - action: email_form
+      - active_loop: null
+      - action: action_run_selected_troubleshooter
+
   - rule: Find Troubleshooter
     steps:
       - intent: report_issue

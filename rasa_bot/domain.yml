@@ -188,6 +188,11 @@ responses:
   - text: "Looks like you were inactive. I’m closing this chat now."
 
 forms:
+  email_form:
+    required_slots:
+      user_email:
+        - type: from_text
+
   create_ticket_form:
     ignored_intents:
       - session_timeout
@@ -296,6 +301,7 @@ actions:
   - action_handle_user_satisfaction_troubleshooter
   - action_handle_software_request
   - action_end_chat
+  - validate_email_form
   - action_run_selected_troubleshooter
   - action_list_printers_by_location
   - action_trigger_printer_installation
