@@ -52,12 +52,12 @@ rules:
   - rule: Start fetch last tickets form
     steps:
       - intent: fetch_incidents
-      - action: fetch_last_tickets
-      - active_loop: fetch_last_tickets
+      - action: fetch_last_tickets_form
+      - active_loop: fetch_last_tickets_form
 
   - rule: Submit fetch last tickets form
     steps:
-      - action: fetch_last_tickets
+      - action: fetch_last_tickets_form
       - active_loop: null
       - action: action_fetch_last_tickets
 
@@ -186,29 +186,16 @@ rules:
       - intent: user_satisfaction_negative
       - action: action_handle_user_satisfaction_provisioning
 
-  - rule: Start printer configuration
+  - rule: Start printer installation form
     steps:
       - intent: request_printer
-      - action: printer_email_form
-      - active_loop: printer_email_form
+      - action: printer_install_form
+      - active_loop: printer_install_form
 
-  - rule: Submit printer email
+  - rule: Submit printer installation form
     steps:
-      - action: printer_email_form
+      - action: printer_install_form
       - active_loop: null
-      - action: utter_ask_printer_location
-
-  - rule: Handle printer location
-    condition:
-      - slot_was_set:
-          - printer_location
-    steps:
-      - intent: inform
-      - action: action_list_printers_by_location
-
-  - rule: Handle printer selection
-    steps:
-      - intent: select_printer
       - action: action_trigger_printer_installation
 
   - rule: Handle printer satisfaction (positive)

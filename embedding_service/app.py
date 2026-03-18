@@ -5,7 +5,7 @@ from qdrant_client import QdrantClient
 app = FastAPI()
 
 COLLECTION = "troubleshooters"
-SIM_THRESHOLD = 0.25
+SIM_THRESHOLD = 0.45
 TOP_K = 3
 EF_SEARCH = 128
 
@@ -13,14 +13,13 @@ model = SentenceTransformer("all-mpnet-base-v2")
 client = QdrantClient(host = "localhost", port = 6333)
 
 @app.post("/match")
-def match(payload: dict):
+async def match(payload: dict):
     query = payload.get("query", "").strip()
     if not query:
         return {"matches" : []}
     
     try:
         vector = model.encode(query, normalize_embeddings = True).tolist()
-
         results = client.query_points(
             collection_name = COLLECTION,
             query = vector,

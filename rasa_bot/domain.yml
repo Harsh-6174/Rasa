@@ -49,14 +49,26 @@ slots:
     type: text
   ticket_id_update:
     type: text
+  ticket_update_retry:
+    type: bool
   ticket_id_or_email:
     type: text
+  ticket_lookup_retry:
+    type: bool
   user_email:
     type: text
+  email_retry:
+    type: bool
+  ticket_retry:
+    type: bool
+  status_retry:
+    type: bool
   short_description:
     type: text
   num_tickets:
     type: text
+  num_tickets_retry:
+    type: bool
   ticket_description:
     type: text
   new_description:
@@ -109,13 +121,28 @@ responses:
     - text: "Please provide the ticket ID you would like to fetch."
 
   utter_ask_ticket_id_update:
+    - condition:
+      - type: slot
+        name: ticket_update_retry
+        value: true
+      text: "That doesn’t look like a valid ticket ID. Please enter again."
     - text: "Please provide the ticket ID you would like to update."
 
   utter_ask_user_email:
+    - condition:
+        - type: slot
+          name: email_retry
+          value: true
+      text: "That doesn’t look like a valid email. Please enter a correct email ID."
     - text: "Please provide your email Id."
 
   utter_ask_ticket_id_or_email:
-    - text: "Please provide your Ticket Id/Email Id"
+    - condition:
+        - type: slot
+          name: ticket_lookup_retry
+          value: true
+      text: "That doesn’t look like a valid ticket ID or email. Please enter again."
+    - text: "Please provide either a ticket ID or email ID to fetch the ticket."
 
   utter_ask_short_description:
     - text: "Please provide a short description of the issue?"
@@ -124,12 +151,23 @@ responses:
     - text: "Please provide the new description for the ticket."
   
   utter_ask_new_status:
+    - condition:
+        - type: slot
+          name: status_retry
+          value: true
+      text: "Please choose a valid status."
+      buttons:
+        - title: "Resolved"
+          payload: '/inform{"new_status":"resolved"}'
+        - title: "Closed"
+          payload: '/inform{"new_status":"closed"}'
+
     - text: "Please provide the new status for the ticket."
       buttons:
-      - title: "Resolved"
-        payload: '/inform{{"new_status":"resolved"}}'
-      - title: "Closed"
-        payload: '/inform{{"new_status":"closed"}}'
+        - title: "Resolved"
+          payload: '/inform{"new_status":"resolved"}'
+        - title: "Closed"
+          payload: '/inform{"new_status":"closed"}'
 
   utter_ask_ticket_description:
     - text: "Please provide a detailed description of the issue."
@@ -138,6 +176,17 @@ responses:
     - text: "Ticket updated successfully."
   
   utter_ask_num_tickets:
+    - condition:
+      - type: slot
+        name: num_tickets_retry
+        value: invalid
+      text: "Please enter a valid positive number for number of tickets."
+
+    - condition:
+        - type: slot
+          name: num_tickets_retry
+          value: limit
+      text: "You can request up to 20 tickets at a time."
     - text: "Please provide the number of tickets to fetch"
 
   utter_ticket_fetched:
@@ -184,6 +233,9 @@ responses:
       - title: "Noida"
         payload: '/inform{{"printer_location":"noida"}}'
   
+  utter_chat_end:
+  - text: "Thanks for chatting! Have a great day. 👋"
+
   utter_session_timeout:
   - text: "Looks like you were inactive. I’m closing this chat now."
 
@@ -207,7 +259,6 @@ forms:
         - type: from_text
       category:
         - type: from_text
-
 
   fetch_ticket_form:
     ignored_intents:
@@ -236,6 +287,8 @@ forms:
       - session_timeout
     required_slots:
       user_email:
+        - type: from_entity
+          entity: user_email
         - type: from_text
       ticket_id_update:
         - type: from_text
@@ -245,9 +298,9 @@ forms:
         - type: from_text
           conditions:
             - active_loop: update_ticket_status_form
-            - requested_slot: new_status
+              requested_slot: new_status
 
-  fetch_last_tickets:
+  fetch_last_tickets_form:
     ignored_intents:
       - session_timeout
     required_slots:
@@ -272,11 +325,11 @@ forms:
         - type: from_entity
           entity: software_name
         - type: from_text
-          condition:
+          conditions:
             - active_loop: software_request_form
-            - requested_slot: software_name
+              requested_slot: software_name
 
-  printer_email_form:
+  printer_install_form:
     ignored_intents:
       - session_timeout
     required_slots:
@@ -284,6 +337,16 @@ forms:
         - type: from_entity
           entity: user_email
         - type: from_text
+      printer_location:
+        - type: from_entity
+          entity: printer_location
+        - type: from_text
+          conditions:
+            - active_loop: printer_install_form
+              requested_slot: printer_location
+      selected_printer:
+        - type: from_entity
+          entity: selected_printer
 
 actions:
   - action_create_ticket
@@ -302,10 +365,18 @@ actions:
   - action_handle_software_request
   - action_end_chat
   - validate_email_form
+  - validate_create_ticket_form
+  - validate_fetch_ticket_form
+  - validate_update_ticket_form
+  - validate_update_ticket_status_form
+  - validate_fetch_last_tickets_form
+  - validate_software_request_form
+  - validate_printer_install_form
   - action_run_selected_troubleshooter
   - action_list_printers_by_location
   - action_trigger_printer_installation
   - action_ask_update_ticket_form_ticket_id_update
   - action_ask_update_ticket_status_form_ticket_id_update
+  - action_ask_printer_install_form_selected_printer
   - action_session_timeout
   - action_handle_user_satisfaction_provisioning
